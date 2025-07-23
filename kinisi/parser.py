@@ -96,6 +96,7 @@ class Parser:
                 dims=['atom'], values=[x for x in range(coords.sizes['atom']) if x not in specie_indices]
             )
 
+
         self.indices = indices
         self.drift_indices = drift_indices
         self._coords = coords
@@ -349,14 +350,14 @@ def get_molecules(
     if set(indices.dims) != {'atom', 'group_of_atoms'}:
         raise ValueError("indices must contain only 'atom' and 'group_of_atoms' as dimensions.")
 
-    n_molecules = indices.sizes['group_of_atoms']
+    n_molecules = indices.sizes['atom']
 
     for i in range(coords.sizes['atom']):
         if i not in indices.values:
             drift_indices.append(i)
     if masses is None:
         weights = sc.ones_like(indices)
-    elif len(masses.values) != len(indices['atom', 0]):
+    elif masses.sizes['group_of_atoms'] != indices.sizes['group_of_atoms']:
         raise ValueError('Masses must be the same length as a molecule or particle group')
     else:
         weights = masses.copy()

@@ -126,31 +126,31 @@ class Analyzer:
         """
         if dtype is None:
             p = PymatgenParser(
-                trajectory.structures,
-                specie,
-                time_step,
-                step_skip,
-                dt,
-                dimension,
-                distance_unit,
-                specie_indices,
-                masses,
-                progress,
+                structures = trajectory.structures,
+                specie = specie,
+                time_step=time_step,
+                step_skip=step_skip,
+                dt=dt,
+                dimension=dimension,
+                distance_unit=distance_unit,
+                specie_indices=specie_indices,
+                masses=masses,
+                progress=progress,
             )
             return cls(p)
         elif dtype == 'identical':
             u = [
                 PymatgenParser(
-                    f.structures,
-                    specie,
-                    time_step,
-                    step_skip,
-                    dt,
-                    dimension,
-                    distance_unit,
-                    progress,
-                    specie_indices,
-                    masses,
+                structures = f.structures,
+                specie = specie,
+                time_step=time_step,
+                step_skip=step_skip,
+                dt=dt,
+                dimension=dimension,
+                distance_unit=distance_unit,
+                specie_indices=specie_indices,
+                masses=masses,
+                progress=progress,
                 )
                 for f in trajectory
             ]
@@ -160,7 +160,16 @@ class Analyzer:
         elif dtype == 'consecutive':
             structures = _flatten_list([x.structures for x in trajectory])
             p = PymatgenParser(
-                structures, specie, time_step, step_skip, dt, dimension, distance_unit, specie_indices, masses, progress
+                structures = structures,
+                specie = specie,
+                time_step=time_step,
+                step_skip=step_skip,
+                dt=dt,
+                dimension=dimension,
+                distance_unit=distance_unit,
+                specie_indices=specie_indices,
+                masses=masses,
+                progress=progress,
             )
             return cls(p)
         else:
