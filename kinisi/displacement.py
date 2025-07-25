@@ -35,7 +35,7 @@ def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
         disp = sc.concat(
             [p.displacements['obs', di - 1], p.displacements['obs', di:] - p.displacements['obs', :-di]], 'obs'
         )
-        n = (p.displacements.sizes['atom'] * p.dt_index['time interval', -1] / di).value
+        n = (p.displacements.sizes['particle'] * p.dt_index['time interval', -1] / di).value
         s = sc.sum(disp**2, 'dimension')
         m = sc.mean(s).value
         v = (sc.var(s, ddof=1) / n).value
@@ -83,7 +83,7 @@ def calculate_mstd(
             [p.displacements['obs', di - 1], p.displacements['obs', di:] - p.displacements['obs', :-di]], 'obs'
         )
         disp = _consolidate_system_particles(disp, system_particles)
-        n = (disp.sizes['atom'] * p.dt_index['time interval', -1] / di).value
+        n = (disp.sizes['particle'] * p.dt_index['time interval', -1] / di).value
         if ionic_charge is not None:
             disp = disp * ionic_charge
         s = sc.sum(disp**2, 'dimension')
@@ -115,18 +115,18 @@ def _consolidate_system_particles(disp: sc.DataArray, system_particles: int = 1)
 
     :return: A :py:class:`scipp.DataArray` object containing the consolidated displacement data.
     """
-    atoms_per_com = disp.sizes['atom'] // system_particles
+    atoms_per_com = disp.sizes['particle'] // system_particles
     max_atoms = atoms_per_com * system_particles
 
-    if max_atoms < disp.sizes['atom']:
+    if max_atoms < disp.sizes['particle']:
         warn(
             f'Truncating {disp.sizes["atom"]} atoms to split evenly into {system_particles} centres of mass. '
             + 'This approach is inefficient, you should consider using the number of system particles to split this evenly.',
             stacklevel=2,
         )
 
-    trimmed = disp['atom', :max_atoms]
-    reshaped = trimmed.fold(dim='atom', sizes={'atom': system_particles, 'local': atoms_per_com})
+    trimmed = disp['particle', :max_atoms]
+    reshaped = trimmed.fold(dim='particle', sizes={'particle': system_particles, 'local': atoms_per_com})
     centres_of_mass = sc.sum(reshaped, dim='local')
 
     return centres_of_mass

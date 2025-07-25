@@ -155,7 +155,7 @@ class Analyzer:
                 for f in trajectory
             ]
             p = u[0]
-            p.displacements = sc.concat([i.displacements for i in u], 'atom')
+            p.displacements = sc.concat([i.displacements for i in u], 'particle')
             return cls(p)
         elif dtype == 'consecutive':
             structures = _flatten_list([x.structures for x in trajectory])
@@ -225,7 +225,7 @@ class Analyzer:
                 for f in trajectory
             ]
             p = u[0]
-            p.displacements = sc.concat([i.displacements for i in u], 'atom')
+            p.displacements = sc.concat([i.displacements for i in u], 'particle')
             return cls(p)
         else:
             raise ValueError('The dtype specified was not recognised, please consult the kinisi documentation.')
@@ -280,7 +280,7 @@ class Analyzer:
                 for f in trajectory
             ]
             p = u[0]
-            p.displacements = sc.concat([i.displacements for i in u], 'atom')
+            p.displacements = sc.concat([i.displacements for i in u], 'particle')
             return cls(p)
         elif dtype == 'consecutive':
             structures = _flatten_list([x for x in trajectory])
@@ -310,7 +310,7 @@ class Analyzer:
         """
         :returns: The number of atoms in the trajectory.
         """
-        return self.trajectory.displacements.sizes['atom']
+        return self.trajectory.displacements.sizes['particle']
 
     @property
     def intercept(self) -> sc.Variable:

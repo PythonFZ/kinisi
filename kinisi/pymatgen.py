@@ -114,7 +114,7 @@ class PymatgenParser(Parser):
         coords_l = np.array(coords_l)
         latt_l = np.array(latt_l)
 
-        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=sc.units.dimensionless)
+        coords = sc.array(dims=['time', 'particle', 'dimension'], values=coords_l, unit=sc.units.dimensionless)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt_l, unit=distance_unit)
 
         return structure, coords, latt
@@ -140,6 +140,6 @@ class PymatgenParser(Parser):
                 indices.append(i)
             else:
                 drift_indices.append(i)
-        indices = sc.Variable(dims=['atom'], values=indices)
-        drift_indices = sc.Variable(dims=['atom'], values=drift_indices)
+        indices = sc.Variable(dims=['particle'], values=indices)
+        drift_indices = sc.Variable(dims=['particle'], values=drift_indices)
         return indices, drift_indices

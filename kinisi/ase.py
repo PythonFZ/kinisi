@@ -112,7 +112,7 @@ class ASEParser(Parser):
         coords.insert(0, coords[0])
         latt.insert(0, latt[0])
 
-        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords, unit=sc.units.dimensionless)
+        coords = sc.array(dims=['time', 'particle', 'dimension'], values=coords, unit=sc.units.dimensionless)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=distance_unit)
 
         return structure, coords, latt
@@ -145,7 +145,7 @@ class ASEParser(Parser):
         if len(indices) == 0:
             raise ValueError('There are no species selected to calculate the mean-squared displacement of.')
 
-        indices = sc.Variable(dims=['atom'], values=indices)
-        drift_indices = sc.Variable(dims=['atom'], values=drift_indices)
+        indices = sc.Variable(dims=['particle'], values=indices)
+        drift_indices = sc.Variable(dims=['particle'], values=drift_indices)
 
         return indices, drift_indices

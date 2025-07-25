@@ -34,7 +34,7 @@ DIMENSIONALITY = {
 # Single letter labels to be used as subscripts for dimensions of scipp arrays in einsums.
 EINSUM_DIMENSIONS = {
     'time': 't',
-    'atom': 'a',
+    'particle': 'a',
     'image': 'i',
     'row': 'r',
     'column': 'c',
@@ -59,7 +59,7 @@ class Parser:
         a step size the same as the smallest interval.
     :param specie_indices: Indices of the specie to calculate the diffusivity for. Optional, defaults to `None`.
     :param masses: Masses of the atoms in the structure. Optional, defaults to `None`.
-        If used should be a 1D scipp array of dimension 'group_of_atoms'.
+        If used should be a 1D scipp array of dimension 'atoms in particle'.
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
     :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
@@ -93,7 +93,7 @@ class Parser:
                 coords, indices, drift_indices = get_molecules(coords, specie_indices, masses)
         if drift_indices is None:
             drift_indices = sc.array(
-                dims=['atom'], values=[x for x in range(coords.sizes['atom']) if x not in specie_indices]
+                dims=['particle'], values=[x for x in range(coords.sizes['particle']) if x not in specie_indices]
             )
 
         self.indices = indices
@@ -111,7 +111,7 @@ class Parser:
         drift_corrected = drift_corrected['dimension', self._slice]
         self.dimensionality = drift_corrected.sizes['dimension'] * sc.units.dimensionless
 
-        self.displacements = drift_corrected['atom', indices]
+        self.displacements = drift_corrected['particle', indices]
         self._volume = np.prod(latt.values[0].diagonal()) * latt.unit**3
 
     def _to_datagroup(self, hdf5=True) -> sc.DataGroup:
@@ -159,7 +159,7 @@ class Parser:
         intervals.
 
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
-            array type object with dimensions of 'atom', 'time', and 'dimension'.
+            array type object with dimensions of 'particle', 'time', and 'dimension'.
         :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
             that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
             that is use for the time interval values.
@@ -211,7 +211,7 @@ class Parser:
         :param specie_indices: Indices for the atoms in the trajectory used in the diffusion calculation
         :param coords: The fractional coordinates of the atoms in the trajectory.
         :param specie: The specie to calculate the diffusivity for.
-        :param masses: Masses associated with indices in indices. 1D scipp array of dim 'group_of_atoms'
+        :param masses: Masses associated with indices in indices. 1D scipp array of dim 'atoms in particle'
 
         :return: A tuple containing the indices for the atoms in the trajectory used in the diffusion calculation
             and indices of framework atoms.
@@ -233,7 +233,7 @@ class Parser:
         Calculate the absolute displacements of the atoms in the trajectory, when the cell is orthorhombic on all frames.
 
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
-            array type object with dimensions of 'atom', 'time', and 'dimension'.
+            array type object with dimensions of 'particle', 'time', and 'dimension'.
         :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
             A :py:mod:`scipp` array with dimensions of 'time', 'dimension1', and 'dimension2'.
 
@@ -271,7 +271,7 @@ class Parser:
             displacement vector, from its 8 periodic images. This ensures that triclinic cells are treated correctly.
 
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
-            array type object with dimensions of 'atom', 'time', and 'dimension'.
+            array type object with dimensions of 'particle', 'time', and 'dimension'.
         :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
             A :py:mod:`scipp` array with dimensions of 'time', 'row', and 'column'.
 
@@ -306,7 +306,7 @@ class Parser:
         :return: Displacements corrected to account for drift of a framework.
         """
         if self.drift_indices.size > 0:
-            return disp - sc.mean(disp['atom', self.drift_indices.values], 'atom')
+            return disp - sc.mean(disp['particle', self.drift_indices.values], 'particle')
         else:
             return disp
 
@@ -346,23 +346,23 @@ def get_molecules(
     """
     drift_indices = []
 
-    if set(indices.dims) != {'atom', 'group_of_atoms'}:
-        raise ValueError("indices must contain only 'atom' and 'group_of_atoms' as dimensions.")
+    if set(indices.dims) != {'particle', 'atoms in particle'}:
+        raise ValueError("indices must contain only 'particle' and 'atoms in particle' as dimensions.")
 
-    n_molecules = indices.sizes['atom']
+    n_molecules = indices.sizes['particle']
 
-    for i in range(coords.sizes['atom']):
+    for i in range(coords.sizes['particle']):
         if i not in indices.values:
             drift_indices.append(i)
     if masses is None:
         weights = sc.ones_like(indices)
-    elif masses.sizes['group_of_atoms'] != indices.sizes['group_of_atoms']:
+    elif masses.sizes['atoms in particle'] != indices.sizes['atoms in particle']:
         raise ValueError('Masses must be the same length as a molecule or particle group')
     else:
         weights = masses.copy()
 
-    if 'group_of_atoms' not in weights.dims:
-        raise ValueError("masses must contain 'group_of_atoms' as dimensions.")
+    if 'atoms in particle' not in weights.dims:
+        raise ValueError("masses must contain 'atoms in particle' as dimensions.")
 
     new_s_coords = _calculate_centers_of_mass(coords, weights, indices)
 
@@ -370,10 +370,10 @@ def get_molecules(
         # MDAnalysis uses float32, so we need to convert to float32 to avoid concat error
         new_s_coords = new_s_coords.astype(np.float32)
 
-    new_coords = sc.concat([new_s_coords, coords['atom', drift_indices]], 'atom')
-    new_indices = sc.Variable(dims=['atom'], values=list(range(n_molecules)))
+    new_coords = sc.concat([new_s_coords, coords['particle', drift_indices]], 'particle')
+    new_indices = sc.Variable(dims=['particle'], values=list(range(n_molecules)))
     new_drift_indices = sc.Variable(
-        dims=['atom'],
+        dims=['particle'],
         values=list(range(n_molecules, n_molecules + len(drift_indices))),
     )
 
@@ -392,15 +392,15 @@ def _calculate_centers_of_mass(
      :param coords: array of fractional coordinates these should be dimensionless
      :param weights: 1D array of weights of elements within molecule
      :param indices: Scipp array of indices for the atoms in the molecules in the trajectory,
-     this must include 2 dimensions 'atom' - The final number of desired atoms and 'group_of_atoms' - the number of atoms in each molecule
+     this must include 2 dimensions 'particle' - The final number of desired atoms and 'atoms in particle' - the number of atoms in each molecule
 
      :return: Array containing coordinates of centres of mass of molecules
     """
-    s_coords = sc.fold(coords['atom', indices.values.flatten()], 'atom', dims=indices.dims, shape=indices.shape)
+    s_coords = sc.fold(coords['particle', indices.values.flatten()], 'particle', dims=indices.dims, shape=indices.shape)
     theta = s_coords * (2 * np.pi * (sc.units.rad))
     xi = sc.cos(theta)
     zeta = sc.sin(theta)
-    dims_id = 'group_of_atoms'
+    dims_id = 'atoms in particle'
     xi_bar = (weights * xi).sum(dim=dims_id) / weights.sum(dim=dims_id)
     zeta_bar = (weights * zeta).sum(dim=dims_id) / weights.sum(dim=dims_id)
     theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
