@@ -120,7 +120,7 @@ def _consolidate_system_particles(disp: sc.DataArray, system_particles: int = 1)
 
     if max_atoms < disp.sizes['particle']:
         warn(
-            f'Truncating {disp.sizes["atom"]} atoms to split evenly into {system_particles} centres of mass. '
+            f'Truncating {disp.sizes["particle"]} atoms to split evenly into {system_particles} centres of mass. '
             + 'This approach is inefficient, you should consider using the number of system particles to split this evenly.',
             stacklevel=2,
         )

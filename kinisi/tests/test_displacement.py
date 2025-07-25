@@ -26,8 +26,8 @@ class TestSystemParticleConsoldiation(unittest.TestCase):
         """
         Test the consolidation of system particles where the number of system particles is 1.
         """
-        disp = sc.Variable(values=np.arange(0, 12, 1).reshape((4, 3, 1)), dims=['obs', 'atom', 'dimension'])
-        expected = sc.Variable(values=np.array([3, 12, 21, 30]).reshape((4, 1, 1)), dims=['obs', 'atom', 'dimension'])
+        disp = sc.Variable(values=np.arange(0, 12, 1).reshape((4, 3, 1)), dims=['obs', 'particle', 'dimension'])
+        expected = sc.Variable(values=np.array([3, 12, 21, 30]).reshape((4, 1, 1)), dims=['obs', 'particle', 'dimension'])
         actual = displacement._consolidate_system_particles(disp)
         testing.assert_identical(actual, expected)
 
@@ -36,9 +36,9 @@ class TestSystemParticleConsoldiation(unittest.TestCase):
         Test the consolidation of system particles where the number of system particles is greater than 1
         and divides nicely by the number of atoms.
         """
-        disp = sc.Variable(values=np.arange(0, 24, 1).reshape((4, 6, 1)), dims=['obs', 'atom', 'dimension'])
+        disp = sc.Variable(values=np.arange(0, 24, 1).reshape((4, 6, 1)), dims=['obs', 'particle', 'dimension'])
         expected = sc.Variable(
-            values=np.array([3, 12, 21, 30, 39, 48, 57, 66]).reshape((4, 2, 1)), dims=['obs', 'atom', 'dimension']
+            values=np.array([3, 12, 21, 30, 39, 48, 57, 66]).reshape((4, 2, 1)), dims=['obs', 'particle', 'dimension']
         )
         actual = displacement._consolidate_system_particles(disp, system_particles=2)
         testing.assert_identical(actual, expected)
@@ -49,11 +49,13 @@ class TestSystemParticleConsoldiation(unittest.TestCase):
         by the number of atoms.
         """
         with pytest.warns(UserWarning) as record:
-            disp = sc.Variable(values=np.arange(0, 28, 1).reshape((4, 7, 1)), dims=['obs', 'atom', 'dimension'])
+            disp = sc.Variable(values=np.arange(0, 28, 1).reshape((4, 7, 1)), dims=['obs', 'particle', 'dimension'])
             expected = sc.Variable(
-                values=np.array([3, 12, 24, 33, 45, 54, 66, 75]).reshape((4, 2, 1)), dims=['obs', 'atom', 'dimension']
+                values=np.array([3, 12, 24, 33, 45, 54, 66, 75]).reshape((4, 2, 1)), dims=['obs', 'particle', 'dimension']
             )
             actual = displacement._consolidate_system_particles(disp, system_particles=2)
+            print(actual.values)
+            print(expected.values)
             testing.assert_identical(actual, expected)
         assert len(record) == 1
         assert str(record[0].message) == (
@@ -72,7 +74,7 @@ class LimitedParser:
 
 
 displacements = sc.Variable(
-    values=np.array([1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5]).reshape((4, 2, 1)), dims=['obs', 'atom', 'dimension']
+    values=np.array([1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5]).reshape((4, 2, 1)), dims=['obs', 'particle', 'dimension']
 )
 dt = sc.Variable(values=np.arange(1, 5, 1), dims=['time interval'], unit='fs')
 time_step = 1 * sc.Unit('fs')

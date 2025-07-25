@@ -60,9 +60,9 @@ class Test_calculate_centers_of_mass(unittest.TestCase):
     for x in seeds:
         np.random.seed(x)
         coords_l = np.random.rand(10, 10, 3) * 0.5
-        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords_l, unit=sc.units.dimensionless)
-        indices = sc.array(dims=['atom', 'group_of_atoms'], values=[[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]])
-        weights = sc.array(dims=['group_of_atoms'], values=np.random.rand(5) * 6)
+        coords = sc.array(dims=['time', 'particle', 'dimension'], values=coords_l, unit=sc.units.dimensionless)
+        indices = sc.array(dims=['particles', 'atoms in particle'], values=[[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]])
+        weights = sc.array(dims=['atoms in particle'], values=np.random.rand(5) * 6)
 
         kinisi_com = parser._calculate_centers_of_mass(coords=coords, weights=weights, indices=indices).values
 
@@ -138,7 +138,7 @@ class test_is_orthorhombic(unittest.TestCase):
             [[0.1, 0.1, 0.1]],
             [[0.9, 0.9, 0.9]],
         ]
-        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords, unit=sc.units.dimensionless)
+        coords = sc.array(dims=['time', 'particle', 'dimension'], values=coords, unit=sc.units.dimensionless)
         latt = np.tile([[10, 0, 0], [0, 10, 0], [0, 0, 10]], (coords.shape[0], 1, 1))
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=sc.units.angstrom)
         disp = parser.Parser.orthorhombic_calculate_displacements(coords=coords, lattice=latt)
@@ -159,7 +159,7 @@ class test_is_orthorhombic(unittest.TestCase):
             [[-2.0, -2.0, -2.0]],
         ]
         test_disp = sc.array(
-            dims=['obs', 'atom', 'dimension'], values=np.cumsum(test_disp, axis=0), unit=sc.units.angstrom
+            dims=['obs', 'particle', 'dimension'], values=np.cumsum(test_disp, axis=0), unit=sc.units.angstrom
         )
         assert_almost_equal(disp.values, test_disp.values)
 
