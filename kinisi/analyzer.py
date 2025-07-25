@@ -126,8 +126,8 @@ class Analyzer:
         """
         if dtype is None:
             p = PymatgenParser(
-                structures = trajectory.structures,
-                specie = specie,
+                structures=trajectory.structures,
+                specie=specie,
                 time_step=time_step,
                 step_skip=step_skip,
                 dt=dt,
@@ -141,16 +141,16 @@ class Analyzer:
         elif dtype == 'identical':
             u = [
                 PymatgenParser(
-                structures = f.structures,
-                specie = specie,
-                time_step=time_step,
-                step_skip=step_skip,
-                dt=dt,
-                dimension=dimension,
-                distance_unit=distance_unit,
-                specie_indices=specie_indices,
-                masses=masses,
-                progress=progress,
+                    structures=f.structures,
+                    specie=specie,
+                    time_step=time_step,
+                    step_skip=step_skip,
+                    dt=dt,
+                    dimension=dimension,
+                    distance_unit=distance_unit,
+                    specie_indices=specie_indices,
+                    masses=masses,
+                    progress=progress,
                 )
                 for f in trajectory
             ]
@@ -160,8 +160,8 @@ class Analyzer:
         elif dtype == 'consecutive':
             structures = _flatten_list([x.structures for x in trajectory])
             p = PymatgenParser(
-                structures = structures,
-                specie = specie,
+                structures=structures,
+                specie=specie,
                 time_step=time_step,
                 step_skip=step_skip,
                 dt=dt,

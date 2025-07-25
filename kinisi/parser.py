@@ -96,7 +96,6 @@ class Parser:
                 dims=['atom'], values=[x for x in range(coords.sizes['atom']) if x not in specie_indices]
             )
 
-
         self.indices = indices
         self.drift_indices = drift_indices
         self._coords = coords
