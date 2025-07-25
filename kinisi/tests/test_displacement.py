@@ -27,7 +27,9 @@ class TestSystemParticleConsoldiation(unittest.TestCase):
         Test the consolidation of system particles where the number of system particles is 1.
         """
         disp = sc.Variable(values=np.arange(0, 12, 1).reshape((4, 3, 1)), dims=['obs', 'particle', 'dimension'])
-        expected = sc.Variable(values=np.array([3, 12, 21, 30]).reshape((4, 1, 1)), dims=['obs', 'particle', 'dimension'])
+        expected = sc.Variable(
+            values=np.array([3, 12, 21, 30]).reshape((4, 1, 1)), dims=['obs', 'particle', 'dimension']
+        )
         actual = displacement._consolidate_system_particles(disp)
         testing.assert_identical(actual, expected)
 
@@ -51,7 +53,8 @@ class TestSystemParticleConsoldiation(unittest.TestCase):
         with pytest.warns(UserWarning) as record:
             disp = sc.Variable(values=np.arange(0, 28, 1).reshape((4, 7, 1)), dims=['obs', 'particle', 'dimension'])
             expected = sc.Variable(
-                values=np.array([3, 12, 24, 33, 45, 54, 66, 75]).reshape((4, 2, 1)), dims=['obs', 'particle', 'dimension']
+                values=np.array([3, 12, 24, 33, 45, 54, 66, 75]).reshape((4, 2, 1)),
+                dims=['obs', 'particle', 'dimension'],
             )
             actual = displacement._consolidate_system_particles(disp, system_particles=2)
             print(actual.values)

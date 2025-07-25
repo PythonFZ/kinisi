@@ -10,9 +10,8 @@ import os
 import unittest
 
 import MDAnalysis as mda
-import numpy as np
 import scipp as sc
-from numpy.testing import assert_almost_equal, assert_equal
+from numpy.testing import assert_almost_equal
 from scipp.testing.assertions import assert_allclose, assert_identical
 
 import kinisi
@@ -51,7 +50,9 @@ class TestMDAnalysisParser(unittest.TestCase):
         data = MDAnalysisParser(xd, **da_params)
         assert_almost_equal(data.time_step, 0.005)
         assert_almost_equal(data.step_skip, 250)
-        assert_identical(data.indices, sc.array(dims=['particle'], values=list(range(204)), unit=sc.units.dimensionless))
+        assert_identical(
+            data.indices, sc.array(dims=['particle'], values=list(range(204)), unit=sc.units.dimensionless)
+        )
 
     def test_mda_init_with_indices(self):
         xd = mda.Universe(
