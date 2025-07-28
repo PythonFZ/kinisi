@@ -103,7 +103,7 @@ class Parser:
         if is_orthorhombic(latt):
             disp = self.orthorhombic_calculate_displacements(coords, latt)
         else:
-            disp = self.orthorhombic_calculate_displacements(coords, latt)
+            disp = self.non_orthorhombic_calculate_displacements(coords, latt)
         self._disp = disp
         drift_corrected = self.correct_drift(disp)
 
@@ -286,7 +286,7 @@ class Parser:
         diff[diff < 0] += 1
         images = images + diff[..., np.newaxis, :]
 
-        cart_images = np.einsum('taid,tdc->taid', images, lattice.values[1:])
+        cart_images = np.einsum('taid,tdc->taic', images, lattice.values[1:])
         image_disps = np.linalg.norm(cart_images, axis=-1)
         min_index = np.argmin(image_disps, axis=-1)
 
