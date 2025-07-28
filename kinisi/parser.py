@@ -432,14 +432,15 @@ def is_orthorhombic(latt: VariableLikeType) -> bool:
     """
     Check if trajectory is always orthorhombic.
 
+    This function works by flattening each frames lattice vectors,
+    then checking which are close to 0, and counting how many return True.
+    If the cell is orthorhombic, only 3 elements, of 9, should be nonzero, leaving 6.
+    Hence, count_nonzero should equal 6 on every element to return true.
+    This does not measure lattice angles and so all vectors must be aligned with axes
+    to return true.
+
     :param latt: a :py:mod:`scipp` array with dimensions `time`,`dimension1`, and `dimension2`.
 
     :return: True if lattice vectors are orthorhombic for all trajectory frames.
     """
-    # This function works by flattening each frames lattice vectors,
-    # then checking which are close to 0, and counting how many return True.
-    # If the cell is orthorhombic, only 3 elements, of 9, should be nonzero, leaving 6.
-    # Hence, count_nonzero should equal 6 on every element to return true.
-    # This does not measure lattice angles and so all vectors must be aligned with axes
-    # to return true.
     return np.all(np.count_nonzero(np.isclose(latt.values.reshape(-1, 9), 0), axis=-1) == 6)
