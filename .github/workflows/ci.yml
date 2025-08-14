@@ -2,6 +2,9 @@ name: python-ci
 
 on: [push, pull_request]
 
+permissions:
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,9 +34,9 @@ jobs:
         ruff format --check kinisi/*
     - name: Generate coverage report
       run: |
-        pytest --cov-report xml --cov=.
-    # - name: Publish code coverage
-    #   if: github.event_name == 'push'
-    #   uses: paambaati/codeclimate-action@v2.7.5
-    #   env:
-    #     CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_REPO_TOKEN }}
+        pytest --cov-report xml:coverage.xml --cov=kinisi 
+    - name: Get Cover 
+      uses: orgoro/coverage@v3.2
+      with:
+          coverageFile: coverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
