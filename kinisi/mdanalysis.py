@@ -56,7 +56,9 @@ class MDAnalysisParser(Parser):
     ):
         structure, coords, latt = self.get_structure_coords_latt(universe, distance_unit, progress)
 
-        specie_indices, drift_indices = super().get_specie_and_drift_indices(specie, specie_indices, drift_indices, structure)
+        specie_indices, drift_indices = super().get_specie_and_drift_indices(
+            specie, specie_indices, drift_indices, structure
+        )
 
         super().__init__(
             coords=coords,
@@ -151,10 +153,11 @@ class MDAnalysisParser(Parser):
 
         return indices, drift_indices
 
-    def get_drift_indices(self, 
-                          structure: 'MDAnalysis.universe.Universe.atoms',
-                          specie_indices: VariableLikeType,
-                          ) -> VariableLikeType:
+    def get_drift_indices(
+        self,
+        structure: 'MDAnalysis.universe.Universe.atoms',
+        specie_indices: VariableLikeType,
+    ) -> VariableLikeType:
         """
         Determine framework indices for an :py:mod:`MDAnalysis` structure.
 

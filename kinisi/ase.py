@@ -66,8 +66,10 @@ class ASEParser(Parser):
     ):
         atoms, coords, latt = self.get_structure_coords_latt(atoms, distance_unit, progress)
 
-        specie_indices, drift_indices = super().get_specie_and_drift_indices(specie, specie_indices, drift_indices, atoms)
-        
+        specie_indices, drift_indices = super().get_specie_and_drift_indices(
+            specie, specie_indices, drift_indices, atoms
+        )
+
         super().__init__(
             coords=coords,
             latt=latt,
@@ -146,11 +148,12 @@ class ASEParser(Parser):
         drift_indices = sc.Variable(dims=['particle'], values=drift_indices)
 
         return indices, drift_indices
-    
-    def get_drift_indices(self, 
-                          structure: 'ase.atoms.Atoms',
-                          specie_indices: VariableLikeType,
-                          ) -> VariableLikeType:
+
+    def get_drift_indices(
+        self,
+        structure: 'ase.atoms.Atoms',
+        specie_indices: VariableLikeType,
+    ) -> VariableLikeType:
         """
         Determine framework indices for an :py:mod:`ase` structure.
 

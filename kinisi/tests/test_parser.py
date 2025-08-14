@@ -12,13 +12,13 @@ import unittest
 
 import MDAnalysis as mda
 import numpy as np
+import pytest
 import scipp as sc
 from numpy.testing import assert_almost_equal, assert_equal
 
 import kinisi
 from kinisi import parser
 
-import pytest
 
 class mda_universe_generator:
     def __init__(self, coords, weights):
@@ -207,6 +207,7 @@ class test_is_orthorhombic(unittest.TestCase):
         )
         assert_almost_equal(disp.values, test_disp.values)
 
+
 dg = sc.io.load_hdf5(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_drift.h5'))
 coords = dg['coords']
 latt = dg['latt']
@@ -247,18 +248,25 @@ class TestParser(unittest.TestCase):
         assert vars(data) == vars(data_2)
         assert type(data) is type(data_2)
 
-    errors_for_get_specie_and_drift_indices = [(None, None, None),
-                  ('Li', sc.array(dims=['atom'],values=[1,2,3]), None),
-                  ('Li', sc.array(dims=['atom'],values=[1,2,3]), [4,5,6]),
-                  (sc.array(dims=['specie'],values=['Li','Na']), sc.array(dims=['atom'],values=[1,2,3]), None),
-                  (sc.array(dims=['specie'],values=['Li','Na']), sc.array(dims=['atom'],values=[1,2,3]), sc.array(dims=['atom'],values=[1,2,3])),
-                  (None, None, sc.array(dims=['atom'],values=[1,2,3])),
-                  (sc.array(dims=['specie'],values=['Li','Na']), None, None),
-                  ]
-    @pytest.mark.parametrize("test_input", errors_for_get_specie_and_drift_indices)
+    errors_for_get_specie_and_drift_indices = [
+        (None, None, None),
+        ('Li', sc.array(dims=['atom'], values=[1, 2, 3]), None),
+        ('Li', sc.array(dims=['atom'], values=[1, 2, 3]), [4, 5, 6]),
+        (sc.array(dims=['specie'], values=['Li', 'Na']), sc.array(dims=['atom'], values=[1, 2, 3]), None),
+        (
+            sc.array(dims=['specie'], values=['Li', 'Na']),
+            sc.array(dims=['atom'], values=[1, 2, 3]),
+            sc.array(dims=['atom'], values=[1, 2, 3]),
+        ),
+        (None, None, sc.array(dims=['atom'], values=[1, 2, 3])),
+        (sc.array(dims=['specie'], values=['Li', 'Na']), None, None),
+    ]
+
+    @pytest.mark.parametrize('test_input', errors_for_get_specie_and_drift_indices)
     def test_get_specie_and_drift_indices_errors(test_input):
         with pytest.raises(TypeError):
             parser.Parser.get_specie_and_drift_indices(None, *test_input, [])
+
 
 # import unittest
 # import numpy as np

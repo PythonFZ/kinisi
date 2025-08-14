@@ -58,7 +58,9 @@ class PymatgenParser(Parser):
     ):
         structure, coords, latt = self.get_structure_coords_latt(structures, distance_unit, progress)
 
-        specie_indices, drift_indices = super().get_specie_and_drift_indices(specie, specie_indices, drift_indices, structure)
+        specie_indices, drift_indices = super().get_specie_and_drift_indices(
+            specie, specie_indices, drift_indices, structure
+        )
 
         super().__init__(
             coords=coords,
@@ -140,10 +142,11 @@ class PymatgenParser(Parser):
         drift_indices = sc.Variable(dims=['particle'], values=drift_indices)
         return indices, drift_indices
 
-    def get_drift_indices(self, 
-                          structure: 'pymatgen.core.structure.Structure',
-                          specie_indices: VariableLikeType,
-                          ) -> VariableLikeType:
+    def get_drift_indices(
+        self,
+        structure: 'pymatgen.core.structure.Structure',
+        specie_indices: VariableLikeType,
+    ) -> VariableLikeType:
         """
         Determine framework indices for an :py:mod:`pymatgen` structure.
 
