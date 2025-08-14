@@ -15,6 +15,8 @@ from scipp.typing import VariableLikeType
 from tqdm import tqdm
 
 from kinisi.parser import Parser
+from kinisi import __version__
+from .due import due, Doi
 
 
 class PymatgenParser(Parser):
@@ -42,6 +44,10 @@ class PymatgenParser(Parser):
     :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
     """
 
+    @due.dcite(Doi('10.1016/j.commatsci.2012.10.028'),
+               path='kinisi.pymatgen.PymatgenParser',
+               description='Pymatgen, which as been used in parsing.',
+               version=__version__)
     def __init__(
         self,
         structures: list['pymatgen.core.structure.Structure'],

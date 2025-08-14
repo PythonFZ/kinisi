@@ -17,7 +17,8 @@ from statsmodels.stats.correlation_tools import cov_nearest
 from tqdm import tqdm
 
 from kinisi.samples import Samples
-
+from kinisi import __version__
+from .due import due, Doi
 
 class Diffusion:
     """
@@ -76,6 +77,10 @@ class Diffusion:
         """
         return self._covariance_matrix
 
+    @due.dcite(Doi('10.1021/acs.jctc.4c01249'),
+               path='kinisi.diffusion.Diffusion.bayesian_regression',
+               description='Performs the Bayesian regression approach.',
+               version=__version__)
     def bayesian_regression(
         self,
         start_dt: sc.Variable,
@@ -290,7 +295,10 @@ class Diffusion:
         ppd = sc.flatten(ppd, dims=['posterior samples', 'predictive samples'], to='samples')
         return ppd
 
-
+@due.dcite(Doi('10.1080/16000870.2019.1696646'),
+           path='kinisi.diffusion.minimum_eigenvalue_method',
+           description='Implements the minimum eigenvalue method for matrix reconditioning.',
+           version=__version__)
 def minimum_eigenvalue_method(cov: np.ndarray, cond_max=1e16) -> np.ndarray:
     """
     Implementation of the matrix reconditioning method known as the minimum

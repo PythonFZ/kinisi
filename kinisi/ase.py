@@ -13,6 +13,8 @@ from scipp.typing import VariableLikeType
 from tqdm import tqdm
 
 from kinisi.parser import Parser
+from kinisi import __version__
+from .due import due, Doi
 
 
 class ASEParser(Parser):
@@ -50,6 +52,10 @@ class ASEParser(Parser):
     :param framework_indices: Optional, list of framework indices to be used to correct framework drift. If an empty list is passed no drift correction will be performed.
     """
 
+    @due.dcite(Doi('10.1088/1361-648X/aa680e'),
+               path='kinisi.ase.ASEParser',
+               description='Atomic simulation environment which has been used for parsing.',
+               version=__version__)
     def __init__(
         self,
         atoms: list['ase.atoms.Atoms'],

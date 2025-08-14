@@ -15,6 +15,9 @@ import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
 
+from kinisi import __version__
+from .due import due, Doi
+
 DIMENSIONALITY = {
     'x': np.s_[0],
     'y': np.s_[1],
@@ -268,8 +271,9 @@ class Parser:
         coords: VariableLikeType, lattice: VariableLikeType
     ) -> VariableLikeType:
         """
-        Calculate the absolute displacements of the atoms in the trajectory, when a non-orthrhombic cell is used. This is done by finding the minimum cartesian
-            displacement vector, from its 8 periodic images. This ensures that triclinic cells are treated correctly.
+        Calculate the absolute displacements of the atoms in the trajectory, when a non-orthrhombic cell is used. 
+            This is done by finding the minimum cartesian displacement vector, from its 8 periodic images. This 
+            ensures that triclinic cells are treated correctly.
 
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
             array type object with dimensions of 'particle', 'time', and 'dimension'.
@@ -407,20 +411,23 @@ def get_molecules(
 
     return new_coords, new_indices, new_drift_indices
 
-
+@due.dcite(Doi('10.1063/5.0260928'),
+           path='kinisi.pymatgen._calculate_centers_of_mass',
+           description='Calculates the weighted molecular centre of mass using the pseudo-center of mass recentering method.',
+           version=__version__)
 def _calculate_centers_of_mass(
     coords: VariableLikeType,
     weights: VariableLikeType,
     indices: VariableLikeType,
 ) -> VariableLikeType:
     """
-    Calculates the weighted molecular centre of mass based on chosen weights and indices as per  DOI: 10.1063/5.0260928.
+    Calculates the weighted molecular centre of mass based on chosen weights and indices as per DOI: 10.1063/5.0260928.
     The method uses the pseudo centre of mass recentering method for efficient centre of mass calculation
 
-     :param coords: array of fractional coordinates these should be dimensionless
-     :param weights: 1D array of weights of elements within molecule
-     :param indices: Scipp array of indices for the atoms in the molecules in the trajectory,
-     this must include 2 dimensions 'particle' - The final number of desired atoms and 'atoms in particle' - the number of atoms in each molecule
+    :param coords: array of fractional coordinates these should be dimensionless
+    :param weights: 1D array of weights of elements within molecule
+    :param indices: Scipp array of indices for the atoms in the molecules in the trajectory,
+        this must include 2 dimensions 'particle' - The final number of desired atoms and 'atoms in particle' - the number of atoms in each molecule
 
      :return: Array containing coordinates of centres of mass of molecules
     """
@@ -438,7 +445,6 @@ def _calculate_centers_of_mass(
     com_pseudo_space = (weights * pseudo_com_recentering).sum(dim=dims_id) / weights.sum(dim=dims_id)
     corrected_com = (com_pseudo_space + (new_s_coords + 0.5)) % 1
 
-    print('If using the kinisi centre of mass feature, please reference: DOI: 10.1063/5.0260928')
     return corrected_com
 
 
