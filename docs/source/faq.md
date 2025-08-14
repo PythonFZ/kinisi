@@ -2,11 +2,14 @@
 
 - I have been using `kinisi` in my research and would like to cite the package, how should I do this?
 
-    > Thanks for using `kinisi`. Please cite the methodological 
+    > Thanks for using `kinisi`.
+    > `kinisi` supports [the `duecredit` framework](https://github.com/duecredit/duecredit) for 
+    > generating the relevant citations to go with your analysis. 
+    > If you cannot use this framework, please cite the methodological 
     > [Journal of Chemical Theory and Computation paper](https://doi.org/10.1021/acs.jctc.4c01249), the 
     > [JOSS software paper](https://doi.org/10.21105/joss.05984), and specifically refer to the version of 
-    > `kinisi` that has been used. If you have used the centre of mass functionality, please also cite our
-    > publication on that, which is currently available as a preprint on [arXiv](https://arxiv.org/abs/2501.14578).
+    > `kinisi` that has been used. If you have used the centre of mass functionality, please also cite [our
+    > publication on that](https://doi.org/10.1063/5.0260928).
     
 - How does `kinisi` work?
 
