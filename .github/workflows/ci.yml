@@ -31,7 +31,7 @@ jobs:
         ruff format --check kinisi/*
     - name: Generate coverage report
       run: |
-        pytest --cov-report xml:coverage.xml
+        pytest --cov-report xml:coverage.xml --cov:kinisi 
     - name: Get Cover 
       uses: orgoro/coverage@v3.2
       with:
