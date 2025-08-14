@@ -165,4 +165,4 @@ class MDAnalysisParser(Parser):
 
         :return: Indices for the atoms in the trajectory used as framework atoms.
         """
-        return sc.array(dims=['atom'], values=[x for x in range(len(structure)) if x not in specie_indices])
+        return sc.array(dims=['particle'], values=[x for x in range(len(structure)) if x not in specie_indices])
