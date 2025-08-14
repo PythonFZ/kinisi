@@ -10,6 +10,8 @@ Parsers for kinisi. This module is responsible for reading in input files from :
 import importlib
 from typing import Union
 
+from abc import abstractmethod
+
 import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
@@ -286,7 +288,7 @@ class Parser:
         diff[diff < 0] += 1
         images = images + diff[..., np.newaxis, :]
 
-        cart_images = np.einsum('taid,tdc->taic', images, lattice.values[1:])
+        cart_images = np.einsum('taid,tdc->taic', images, lattice.values[1:]) 
         image_disps = np.linalg.norm(cart_images, axis=-1)
         min_index = np.argmin(image_disps, axis=-1)
 
@@ -309,6 +311,31 @@ class Parser:
             return disp - sc.mean(disp['particle', self.drift_indices.values], 'particle')
         else:
             return disp
+        
+    @abstractmethod
+    def get_indices(self, structure, specie):
+        pass
+    
+    @abstractmethod
+    def get_drift_indices(self, structure, specie_indices):
+        pass
+
+    def get_specie_and_drift_indices(self, specie, specie_indices, drift_indices, structure):
+        match (specie, specie_indices, drift_indices):
+            case (None, None, _):
+                raise TypeError('Must specify specie or specie_indices, as str or scipp Variable and scipp Variable, respectively.')
+            case (str() | sc.Variable(), sc.Variable(), _):
+                raise TypeError('Must only specify specie or specie_indices.')
+            case (str() | sc.Variable(), None, None): # Automatic specie_indices, with automatic drift correction
+                specie_indices, drift_indices = self.get_indices(structure, specie)
+            case (str() | sc.Variable(), None, sc.Variable()): # Automatic specie_indices, with manual drift correction
+                specie_indices, _ = self.get_indices(structure, specie)
+            case (None, sc.Variable(), None): # Manual specie_indices, with automatic drift correction
+                drift_indices = self.get_drift_indices(structure, specie_indices)
+            case (None, sc.Variable(), sc.Variable()): # Automatic specie_indices, with automatic drift correction
+                pass
+            
+        return specie_indices, drift_indices
 
     @property
     def coords(self):
