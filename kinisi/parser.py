@@ -333,7 +333,7 @@ class Parser:
                 specie_indices, _ = self.get_indices(structure, specie)
             case (None, sc.Variable(), None):  # Manual specie_indices, with automatic drift correction
                 drift_indices = self.get_drift_indices(structure, specie_indices)
-            case (None, sc.Variable(), sc.Variable()):  # Automatic specie_indices, with automatic drift correction
+            case (None, sc.Variable(), sc.Variable()):  # Manual specie_indices, with manual drift correction
                 pass
 
         return specie_indices, drift_indices
