@@ -193,51 +193,6 @@ class Parser:
         dt_index = (self.dt / (time_step * step_skip)).astype(int)
         return dt_index
 
-    def generate_indices(
-        self,
-        structure: tuple[
-            Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe'],
-            VariableLikeType,
-            VariableLikeType,
-        ],
-        specie_indices: VariableLikeType,
-        coords: VariableLikeType,
-        specie: Union[
-            'pymatgen.core.periodic_table.Element',
-            'pymatgen.core.periodic_table.Specie',
-            'str',
-        ],
-        masses: VariableLikeType,
-    ) -> tuple[VariableLikeType, VariableLikeType]:
-        """
-        Handle the specie indices and determine the indices for the framework and drift correction.
-
-        :param structure: The initial structure to determine the indices from.
-        :param specie_indices: Indices for the atoms in the trajectory used in the diffusion calculation
-        :param coords: The fractional coordinates of the atoms in the trajectory.
-        :param specie: The specie to calculate the diffusivity for.
-        :param masses: Masses associated with indices in indices. 1D scipp array of dim 'atoms in particle'
-
-        :return: A tuple containing the indices for the atoms in the trajectory used in the diffusion calculation
-            and indices of framework atoms.
-        """
-        if specie is not None:
-            indices, drift_indices = self.get_indices(structure, specie)
-        elif isinstance(specie_indices, sc.Variable):
-            if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = get_molecules(structure, coords, specie_indices, masses)
-            else:
-                indices, drift_indices = get_framework(structure, specie_indices)
-        else:
-            raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
-        return coords, indices, drift_indices
-
-    @due.dcite(
-        Doi('10.1021/acs.jctc.3c00308'),
-        path='kinisi.parser.Parser.orthorhombic_calculate_displacements',
-        description='Uses the TOR scheme to find the unwrapped displacements of the atoms in the trajectory.',
-        version=__version__,
-    )
     @staticmethod
     def orthorhombic_calculate_displacements(coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
