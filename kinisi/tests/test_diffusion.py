@@ -1,12 +1,10 @@
-# """
-# Tests for diffusion module
+"""
+Tests for diffusion module
+"""
 
-# Copyright (c) Andrew R. McCluskey and Benjamin J. Morgan
-
-# Distributed under the terms of the MIT License
-
+# Copyright (c) kinisi developers.
+# Distributed under the terms of the MIT License.
 # @author: Andrew R. McCluskey (arm61) & Harry Richardson (Harry-Rich)
-# """
 
 import os
 import unittest

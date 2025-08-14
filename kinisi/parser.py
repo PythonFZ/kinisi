@@ -5,7 +5,7 @@ Parsers for kinisi. This module is responsible for reading in input files from :
 
 # Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License.
-# author: Andrew R. McCluskey (arm61), Harry Richardson (Harry-Rich) and Oskar G. Soulas (osoulas).
+# author: Josh Dunn (jd15489), Andrew R. McCluskey (arm61), Harry Richardson (Harry-Rich) and Oskar G. Soulas (osoulas).
 
 import importlib
 from abc import abstractmethod
@@ -16,7 +16,8 @@ import scipp as sc
 from scipp.typing import VariableLikeType
 
 from kinisi import __version__
-from .due import due, Doi
+
+from .due import Doi, due
 
 DIMENSIONALITY = {
     'x': np.s_[0],
@@ -271,8 +272,8 @@ class Parser:
         coords: VariableLikeType, lattice: VariableLikeType
     ) -> VariableLikeType:
         """
-        Calculate the absolute displacements of the atoms in the trajectory, when a non-orthrhombic cell is used. 
-            This is done by finding the minimum cartesian displacement vector, from its 8 periodic images. This 
+        Calculate the absolute displacements of the atoms in the trajectory, when a non-orthrhombic cell is used.
+            This is done by finding the minimum cartesian displacement vector, from its 8 periodic images. This
             ensures that triclinic cells are treated correctly.
 
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
@@ -411,10 +412,13 @@ def get_molecules(
 
     return new_coords, new_indices, new_drift_indices
 
-@due.dcite(Doi('10.1063/5.0260928'),
-           path='kinisi.pymatgen._calculate_centers_of_mass',
-           description='Calculates the weighted molecular centre of mass using the pseudo-center of mass recentering method.',
-           version=__version__)
+
+@due.dcite(
+    Doi('10.1063/5.0260928'),
+    path='kinisi.pymatgen._calculate_centers_of_mass',
+    description='Calculates the weighted molecular centre of mass using the pseudo-center of mass recentering method.',
+    version=__version__,
+)
 def _calculate_centers_of_mass(
     coords: VariableLikeType,
     weights: VariableLikeType,
