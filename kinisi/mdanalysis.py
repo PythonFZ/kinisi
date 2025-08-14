@@ -56,11 +56,7 @@ class MDAnalysisParser(Parser):
     ):
         structure, coords, latt = self.get_structure_coords_latt(universe, distance_unit, progress)
 
-        if specie is None and specie_indices is None:
-            raise TypeError('Must specify specie or specie_indices as scipp VariableLikeType')
-        else:
-            if specie is not None:
-                specie_indices, drift_indices = self.get_indices(structure, specie)
+        specie_indices, drift_indices = super().get_specie_and_drift_indices(specie, specie_indices, drift_indices, structure)
 
         super().__init__(
             coords=coords,
@@ -154,3 +150,16 @@ class MDAnalysisParser(Parser):
         drift_indices = sc.Variable(dims=['particle'], values=drift_indices)
 
         return indices, drift_indices
+
+    def get_drift_indices(self, 
+                          structure: 'MDAnalysis.universe.Universe.atoms',
+                          specie_indices: VariableLikeType,
+                          ) -> VariableLikeType:
+        """
+        Determine framework indices for an :py:mod:`MDAnalysis` structure.
+
+        :param structure: Initial structure.
+
+        :return: Indices for the atoms in the trajectory used as framework atoms.
+        """
+        return sc.array(dims=['atom'], values=[x for x in range(len(structure)) if x not in specie_indices])

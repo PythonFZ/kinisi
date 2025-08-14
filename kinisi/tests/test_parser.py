@@ -18,6 +18,7 @@ from numpy.testing import assert_almost_equal, assert_equal
 import kinisi
 from kinisi import parser
 
+import pytest
 
 class mda_universe_generator:
     def __init__(self, coords, weights):
@@ -163,6 +164,48 @@ class test_is_orthorhombic(unittest.TestCase):
         )
         assert_almost_equal(disp.values, test_disp.values)
 
+    def test_non_orthorhombic_calculate_displacements(self):
+        coords = [
+            [[0.1, 0.1, 0.1]],
+            [[0.1, 0.1, 0.1]],
+            [[0.9, 0.1, 0.1]],
+            [[0.1, 0.1, 0.1]],
+            [[0.1, 0.9, 0.1]],
+            [[0.1, 0.1, 0.1]],
+            [[0.1, 0.1, 0.9]],
+            [[0.1, 0.1, 0.1]],
+            [[0.9, 0.9, 0.1]],
+            [[0.1, 0.1, 0.1]],
+            [[0.9, 0.1, 0.9]],
+            [[0.1, 0.1, 0.1]],
+            [[0.1, 0.9, 0.9]],
+            [[0.1, 0.1, 0.1]],
+            [[0.9, 0.9, 0.9]],
+        ]
+        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords, unit=sc.units.dimensionless)
+        latt = np.tile([[10, 0, 0], [0, 10, 0], [0, 0, 10]], (coords.shape[0], 1, 1))
+        latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=sc.units.angstrom)
+        disp = parser.Parser.non_orthorhombic_calculate_displacements(coords=coords, lattice=latt)
+        test_disp = [
+            [[0.0, 0.0, 0.0]],
+            [[-2.0, 0.0, 0.0]],
+            [[2.0, 0.0, 0.0]],
+            [[0.0, -2.0, 0.0]],
+            [[0.0, 2.0, 0.0]],
+            [[0.0, 0.0, -2.0]],
+            [[0.0, 0.0, 2.0]],
+            [[-2.0, -2.0, 0.0]],
+            [[2.0, 2.0, 0.0]],
+            [[-2.0, 0.0, -2.0]],
+            [[2.0, 0.0, 2.0]],
+            [[0.0, -2.0, -2.0]],
+            [[0.0, 2.0, 2.0]],
+            [[-2.0, -2.0, -2.0]],
+        ]
+        test_disp = sc.array(
+            dims=['obs', 'atom', 'dimension'], values=np.cumsum(test_disp, axis=0), unit=sc.units.angstrom
+        )
+        assert_almost_equal(disp.values, test_disp.values)
 
 dg = sc.io.load_hdf5(os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_drift.h5'))
 coords = dg['coords']
@@ -204,6 +247,18 @@ class TestParser(unittest.TestCase):
         assert vars(data) == vars(data_2)
         assert type(data) is type(data_2)
 
+    errors_for_get_specie_and_drift_indices = [(None, None, None),
+                  ('Li', sc.array(dims=['atom'],values=[1,2,3]), None),
+                  ('Li', sc.array(dims=['atom'],values=[1,2,3]), [4,5,6]),
+                  (sc.array(dims=['specie'],values=['Li','Na']), sc.array(dims=['atom'],values=[1,2,3]), None),
+                  (sc.array(dims=['specie'],values=['Li','Na']), sc.array(dims=['atom'],values=[1,2,3]), sc.array(dims=['atom'],values=[1,2,3])),
+                  (None, None, sc.array(dims=['atom'],values=[1,2,3])),
+                  (sc.array(dims=['specie'],values=['Li','Na']), None, None),
+                  ]
+    @pytest.mark.parametrize("test_input", errors_for_get_specie_and_drift_indices)
+    def test_get_specie_and_drift_indices_errors(test_input):
+        with pytest.raises(TypeError):
+            parser.Parser.get_specie_and_drift_indices(None, *test_input, [])
 
 # import unittest
 # import numpy as np
