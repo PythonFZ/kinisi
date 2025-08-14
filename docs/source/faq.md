@@ -23,10 +23,21 @@
     
 - How are trajectories unwrapped?
 
-  > When calculating displacements, `kinisi` uses a simple heuristic to unwrap trajectories. 
-  > If the displacement between two steps, is greater than half the simulation cell length, `kinisi` wraps that
-  > displacement. This scheme assumes that no particle moves more than one cell between steps. Therefore, it requires that
-  > enough simulation data is provided to `kinisi`. 
-  > To handle simulations with the NPT ensemble, we use the 
-  > [TOR scheme, developed by Bullerjahn and co-workers](https://pubs.acs.org/doi/10.1021/acs.jctc.3c00308).
-  > If you use `kinisi` for an NPT simulation, please cite their work.
+    > When calculating displacements, `kinisi` uses a simple heuristic to unwrap trajectories. 
+    > If the displacement between two steps, is greater than half the simulation cell length, `kinisi` wraps that
+    > displacement. This scheme assumes that no particle moves more than one cell between steps. Therefore, it requires that
+    > enough simulation data is provided to `kinisi`. 
+    > To handle simulations with the NPT ensemble, we use the 
+    > [TOR scheme, developed by Bullerjahn and co-workers](https://pubs.acs.org/doi/10.1021/acs.jctc.3c00308).
+    > If you use `kinisi` for an NPT simulation, please cite their work.
+
+- I don't want to sample the MSD at all possible time intervals, how can I achieve this?
+
+    > This can be achieved through the use of a custom time interval input. 
+    > You can see how to do this in the [MDAnalysis comparison notebook](./mdanalysis). 
+
+- My analysis is giving very weird numbers for the diffusion coefficient, and my trendline appears very long, what's happening?
+
+    > You may be encountering the joys of a covariance matrix with a high condition number. 
+    > This leads to issues with numerical precision in some of the operations kinisi performs. 
+    > We have a short [documentation page](./condition_number) that describes this issue and provides a potential mitigation strategy. 
