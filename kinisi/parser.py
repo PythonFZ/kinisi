@@ -232,6 +232,12 @@ class Parser:
             raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
         return coords, indices, drift_indices
 
+    @due.dcite(
+        Doi('10.1021/acs.jctc.3c00308'),
+        path='kinisi.parser.Parser.orthorhombic_calculate_displacements',
+        description='Uses the TOR scheme to find the unwrapped displacements of the atoms in the trajectory.',
+        version=__version__,
+    )
     @staticmethod
     def orthorhombic_calculate_displacements(coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
