@@ -8,6 +8,7 @@ Parsers for kinisi. This module is responsible for reading in input files from :
 # author: Andrew R. McCluskey (arm61), Harry Richardson (Harry-Rich) and Oskar G. Soulas (osoulas).
 
 import importlib
+from abc import abstractmethod
 from typing import Union
 
 import numpy as np
@@ -34,11 +35,11 @@ DIMENSIONALITY = {
 # Single letter labels to be used as subscripts for dimensions of scipp arrays in einsums.
 EINSUM_DIMENSIONS = {
     'time': 't',
-    'atom': 'a',
+    'particle': 'a',
     'image': 'i',
     'row': 'r',
     'column': 'c',
-}  
+}
 
 
 class Parser:
@@ -59,7 +60,7 @@ class Parser:
         a step size the same as the smallest interval.
     :param specie_indices: Indices of the specie to calculate the diffusivity for. Optional, defaults to `None`.
     :param masses: Masses of the atoms in the structure. Optional, defaults to `None`.
-        If used should be a 1D scipp array of dimension 'group_of_atoms'.
+        If used should be a 1D scipp array of dimension 'atoms in particle'.
     :param dimension: Dimension/s to find the displacement along, this should be some subset of `'xyz'` indicating
         the axes of interest. Optional, defaults to `'xyz'`.
     :param progress: Whether to show a progress bar when reading in the structures. Optional, defaults to `True`.
@@ -75,7 +76,7 @@ class Parser:
         specie_indices: VariableLikeType = None,
         drift_indices: VariableLikeType = None,
         masses: VariableLikeType = None,
-        dimension: str = 'xyz'
+        dimension: str = 'xyz',
     ):
         self.time_step = time_step
         self.step_skip = step_skip
@@ -91,6 +92,10 @@ class Parser:
                 indices = specie_indices
             else:
                 coords, indices, drift_indices = get_molecules(coords, specie_indices, masses)
+        if drift_indices is None:
+            drift_indices = sc.array(
+                dims=['particle'], values=[x for x in range(coords.sizes['particle']) if x not in specie_indices]
+            )
 
         self.indices = indices
         self.drift_indices = drift_indices
@@ -107,7 +112,7 @@ class Parser:
         drift_corrected = drift_corrected['dimension', self._slice]
         self.dimensionality = drift_corrected.sizes['dimension'] * sc.units.dimensionless
 
-        self.displacements = drift_corrected['atom', indices]
+        self.displacements = drift_corrected['particle', indices]
         self._volume = np.prod(latt.values[0].diagonal()) * latt.unit**3
 
     def _to_datagroup(self, hdf5=True) -> sc.DataGroup:
@@ -155,7 +160,7 @@ class Parser:
         intervals.
 
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
-            array type object with dimensions of 'atom', 'time', and 'dimension'.
+            array type object with dimensions of 'particle', 'time', and 'dimension'.
         :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
             that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
             that is use for the time interval values.
@@ -207,7 +212,7 @@ class Parser:
         :param specie_indices: Indices for the atoms in the trajectory used in the diffusion calculation
         :param coords: The fractional coordinates of the atoms in the trajectory.
         :param specie: The specie to calculate the diffusivity for.
-        :param masses: Masses associated with indices in indices. 1D scipp array of dim 'group_of_atoms'
+        :param masses: Masses associated with indices in indices. 1D scipp array of dim 'atoms in particle'
 
         :return: A tuple containing the indices for the atoms in the trajectory used in the diffusion calculation
             and indices of framework atoms.
@@ -224,14 +229,12 @@ class Parser:
         return coords, indices, drift_indices
 
     @staticmethod
-    def orthorhombic_calculate_displacements(
-        coords: VariableLikeType, lattice: VariableLikeType
-    ) -> VariableLikeType:
+    def orthorhombic_calculate_displacements(coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
         Calculate the absolute displacements of the atoms in the trajectory, when the cell is orthorhombic on all frames.
 
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
-            array type object with dimensions of 'atom', 'time', and 'dimension'.
+            array type object with dimensions of 'particle', 'time', and 'dimension'.
         :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
             A :py:mod:`scipp` array with dimensions of 'time', 'dimension1', and 'dimension2'.
 
@@ -269,7 +272,7 @@ class Parser:
             displacement vector, from its 8 periodic images. This ensures that triclinic cells are treated correctly.
 
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
-            array type object with dimensions of 'atom', 'time', and 'dimension'.
+            array type object with dimensions of 'particle', 'time', and 'dimension'.
         :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
             A :py:mod:`scipp` array with dimensions of 'time', 'row', and 'column'.
 
@@ -277,19 +280,19 @@ class Parser:
         """
         diff = np.diff(coords.values, axis=0)
         images = np.tile(
-            [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0], [0, 0, 1], [-1, 0, 1], [-1, -1, 1], [0, -1, 1]],
+            [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0], [0, 0, -1], [-1, 0, -1], [-1, -1, -1], [0, -1, -1]],
             (diff.shape[0], diff.shape[1], 1, 1),
         )
 
         diff[diff < 0] += 1
         images = images + diff[..., np.newaxis, :]
 
-        cart_images = np.einsum('taid,tdc->taid', images, lattice.values[1:])
+        cart_images = np.einsum('taid,tdc->taic', images, lattice.values[1:])
         image_disps = np.linalg.norm(cart_images, axis=-1)
         min_index = np.argmin(image_disps, axis=-1)
 
         min_vectors = cart_images[np.arange(images.shape[0])[:, None], np.arange(images.shape[1])[None, :], min_index]
-        min_vectors = sc.array(dims=['obs'] + list(coords.dims[1:]), values=min_vectors, unit=coords.unit)
+        min_vectors = sc.array(dims=['obs'] + list(coords.dims[1:]), values=min_vectors, unit=lattice.unit)
         disps = sc.cumsum(min_vectors, 'obs')
 
         return disps
@@ -304,9 +307,36 @@ class Parser:
         :return: Displacements corrected to account for drift of a framework.
         """
         if self.drift_indices.size > 0:
-            return disp - sc.mean(disp['atom', self.drift_indices.values], 'atom')
+            return disp - sc.mean(disp['particle', self.drift_indices.values], 'particle')
         else:
             return disp
+
+    @abstractmethod
+    def get_indices(self, structure, specie):
+        pass
+
+    @abstractmethod
+    def get_drift_indices(self, structure, specie_indices):
+        pass
+
+    def get_specie_and_drift_indices(self, specie, specie_indices, drift_indices, structure):
+        match (specie, specie_indices, drift_indices):
+            case (None, None, _):
+                raise TypeError(
+                    'Must specify specie or specie_indices, as str or scipp Variable and scipp Variable, respectively.'
+                )
+            case (str() | sc.Variable(), sc.Variable(), _):
+                raise TypeError('Must only specify specie or specie_indices.')
+            case (str() | sc.Variable(), None, None):  # Automatic specie_indices, with automatic drift correction
+                specie_indices, drift_indices = self.get_indices(structure, specie)
+            case (str() | sc.Variable(), None, sc.Variable()):  # Automatic specie_indices, with manual drift correction
+                specie_indices, _ = self.get_indices(structure, specie)
+            case (None, sc.Variable(), None):  # Manual specie_indices, with automatic drift correction
+                drift_indices = self.get_drift_indices(structure, specie_indices)
+            case (None, sc.Variable(), sc.Variable()):  # Manual specie_indices, with manual drift correction
+                pass
+
+        return specie_indices, drift_indices
 
     @property
     def coords(self):
@@ -344,24 +374,23 @@ def get_molecules(
     """
     drift_indices = []
 
-    if set(indices.dims) != {'atom', 'group_of_atoms'}:
-        raise ValueError("indices must contain only 'atom' and 'group_of_atoms' as dimensions.")
+    if set(indices.dims) != {'particle', 'atoms in particle'}:
+        raise ValueError("indices must contain only 'particle' and 'atoms in particle' as dimensions.")
 
-    n_molecules = indices.sizes['group_of_atoms']
+    n_molecules = indices.sizes['particle']
 
-    for i in range(coords.sizes['atom']):
+    for i in range(coords.sizes['particle']):
         if i not in indices.values:
             drift_indices.append(i)
-
     if masses is None:
         weights = sc.ones_like(indices)
-    elif len(masses.values) != len(indices['atom', 0]):
+    elif masses.sizes['atoms in particle'] != indices.sizes['atoms in particle']:
         raise ValueError('Masses must be the same length as a molecule or particle group')
     else:
         weights = masses.copy()
 
-    if 'group_of_atoms' not in weights.dims:
-        raise ValueError("masses must contain 'group_of_atoms' as dimensions.")
+    if 'atoms in particle' not in weights.dims:
+        raise ValueError("masses must contain 'atoms in particle' as dimensions.")
 
     new_s_coords = _calculate_centers_of_mass(coords, weights, indices)
 
@@ -369,14 +398,15 @@ def get_molecules(
         # MDAnalysis uses float32, so we need to convert to float32 to avoid concat error
         new_s_coords = new_s_coords.astype(np.float32)
 
-    new_coords = sc.concat([new_s_coords, coords['atom', drift_indices]], 'atom')
-    new_indices = sc.Variable(dims=['atom'], values=list(range(n_molecules)))
+    new_coords = sc.concat([new_s_coords, coords['particle', drift_indices]], 'particle')
+    new_indices = sc.Variable(dims=['particle'], values=list(range(n_molecules)))
     new_drift_indices = sc.Variable(
-        dims=['atom'],
+        dims=['particle'],
         values=list(range(n_molecules, n_molecules + len(drift_indices))),
     )
 
     return new_coords, new_indices, new_drift_indices
+
 
 def _calculate_centers_of_mass(
     coords: VariableLikeType,
@@ -390,15 +420,15 @@ def _calculate_centers_of_mass(
      :param coords: array of fractional coordinates these should be dimensionless
      :param weights: 1D array of weights of elements within molecule
      :param indices: Scipp array of indices for the atoms in the molecules in the trajectory,
-     this must include 2 dimensions 'atom' - The final number of desired atoms and 'group_of_atoms' - the number of atoms in each molecule
+     this must include 2 dimensions 'particle' - The final number of desired atoms and 'atoms in particle' - the number of atoms in each molecule
 
      :return: Array containing coordinates of centres of mass of molecules
     """
-    s_coords = sc.fold(coords['atom', indices.values.flatten()], 'atom', dims=indices.dims, shape=indices.shape)
+    s_coords = sc.fold(coords['particle', indices.values.flatten()], 'particle', dims=indices.dims, shape=indices.shape)
     theta = s_coords * (2 * np.pi * (sc.units.rad))
     xi = sc.cos(theta)
     zeta = sc.sin(theta)
-    dims_id = 'group_of_atoms'
+    dims_id = 'atoms in particle'
     xi_bar = (weights * xi).sum(dim=dims_id) / weights.sum(dim=dims_id)
     zeta_bar = (weights * zeta).sum(dim=dims_id) / weights.sum(dim=dims_id)
     theta_bar = sc.atan2(y=-zeta_bar, x=-xi_bar) + np.pi * sc.units.rad
@@ -430,14 +460,15 @@ def is_orthorhombic(latt: VariableLikeType) -> bool:
     """
     Check if trajectory is always orthorhombic.
 
+    This function works by flattening each frames lattice vectors,
+    then checking which are close to 0, and counting how many return True.
+    If the cell is orthorhombic, only 3 elements, of 9, should be nonzero, leaving 6.
+    Hence, count_nonzero should equal 6 on every element to return true.
+    This does not measure lattice angles and so all vectors must be aligned with axes
+    to return true.
+
     :param latt: a :py:mod:`scipp` array with dimensions `time`,`dimension1`, and `dimension2`.
 
     :return: True if lattice vectors are orthorhombic for all trajectory frames.
     """
-    # This function works by flattening each frames lattice vectors,
-    # then checking which are close to 0, and counting how many return True.
-    # If the cell is orthorhombic, only 3 elements, of 9, should be nonzero, leaving 6.
-    # Hence, count_nonzero should equal 6 on every element to return true.
-    # This does not measure lattice angles and so all vectors must be aligned with axes
-    # to return true.
     return np.all(np.count_nonzero(np.isclose(latt.values.reshape(-1, 9), 0), axis=-1) == 6)

@@ -7,7 +7,6 @@ It is used to extract the necessary data for diffusion analysis from ASE.
 # Distributed under the terms of the MIT License.
 # author: Josh Dunn (jd15489).
 
-
 import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
@@ -67,22 +66,20 @@ class ASEParser(Parser):
     ):
         atoms, coords, latt = self.get_structure_coords_latt(atoms, distance_unit, progress)
 
-        if specie is None and specie_indices is None:
-                raise TypeError('Must specify specie or specie_indices as scipp VariableLikeType')
-        else:
-            if specie is not None:
-                specie_indices, drift_indices = self.get_indices(atoms, specie)
+        specie_indices, drift_indices = super().get_specie_and_drift_indices(
+            specie, specie_indices, drift_indices, atoms
+        )
 
         super().__init__(
-            coords,
-            latt,
-            time_step,
-            step_skip,
-            dt,
-            specie_indices,
-            drift_indices,
-            masses,
-            dimension
+            coords=coords,
+            latt=latt,
+            time_step=time_step,
+            step_skip=step_skip,
+            dt=dt,
+            specie_indices=specie_indices,
+            drift_indices=drift_indices,
+            masses=masses,
+            dimension=dimension,
         )
 
     def get_structure_coords_latt(
@@ -114,7 +111,7 @@ class ASEParser(Parser):
         coords.insert(0, coords[0])
         latt.insert(0, latt[0])
 
-        coords = sc.array(dims=['time', 'atom', 'dimension'], values=coords, unit=sc.units.dimensionless)
+        coords = sc.array(dims=['time', 'particle', 'dimension'], values=coords, unit=sc.units.dimensionless)
         latt = sc.array(dims=['time', 'dimension1', 'dimension2'], values=latt, unit=distance_unit)
 
         return structure, coords, latt
@@ -147,7 +144,21 @@ class ASEParser(Parser):
         if len(indices) == 0:
             raise ValueError('There are no species selected to calculate the mean-squared displacement of.')
 
-        indices = sc.Variable(dims=['atom'], values=indices)
-        drift_indices = sc.Variable(dims=['atom'], values=drift_indices)
+        indices = sc.Variable(dims=['particle'], values=indices)
+        drift_indices = sc.Variable(dims=['particle'], values=drift_indices)
 
         return indices, drift_indices
+
+    def get_drift_indices(
+        self,
+        structure: 'ase.atoms.Atoms',
+        specie_indices: VariableLikeType,
+    ) -> VariableLikeType:
+        """
+        Determine framework indices for an :py:mod:`ase` structure.
+
+        :param structure: Initial structure.
+
+        :return: Indices for the atoms in the trajectory used as framework atoms.
+        """
+        return sc.array(dims=['atom'], values=[x for x in range(len(structure)) if x not in specie_indices])
