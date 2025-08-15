@@ -9,7 +9,6 @@ Parsers for kinisi. This module is responsible for reading in input files from :
 
 import importlib
 from abc import abstractmethod
-from typing import Union
 
 import numpy as np
 import scipp as sc
