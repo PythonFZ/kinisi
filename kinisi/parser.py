@@ -191,7 +191,7 @@ class Parser:
 
         dt_index = (self.dt / (time_step * step_skip)).astype(int)
         return dt_index
-    
+
     @due.dcite(
         Doi('10.1021/acs.jctc.3c00308'),
         path='kinisi.parser.Parser.orthorhombic_calculate_displacements',
