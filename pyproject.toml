@@ -52,7 +52,6 @@ dev = [
     'pytest-cov',
     'ase',
     'h5py',
-    'pyblock',
     'ruff'
 ]
 
