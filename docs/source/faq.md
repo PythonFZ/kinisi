@@ -26,11 +26,15 @@
     
 - How are trajectories unwrapped?
 
-    > When calculating displacements, `kinisi` uses a simple heuristic to unwrap trajectories. 
-    > If the displacement between two steps, is greater than half the simulation cell length, `kinisi` wraps that
-    > displacement. This scheme assumes that no particle moves more than one cell between steps. Therefore, it requires that
-    > enough simulation data is provided to `kinisi`. 
-    > To handle simulations with the NPT ensemble, we use the 
+    > When calculating displacements, `kinisi` aims to find the minimum displacement between trajectory steps.
+    > This can be done for orthorhombic cells with a simple heuristic: if the diplacement is greater than one half
+    > the simulation cell length, `kinisi` wraps that displacement.
+    > For the case of non-orthorhombic simulation cells, the displacements to all periodic images are calculated 
+    > and the minimum used. This scheme assumes that no particle moves more than one cell between steps.
+    > Therefore, it requires that enough simulation data is provided to `kinisi`,
+    > in other words, that there is a small enough time skip between trajectory steps. 
+    > A small enchancement is made to these methods, in order to account for changes in cell volume during 
+    > NPT simulations. This enhancement is the 
     > [TOR scheme, developed by Bullerjahn and co-workers](https://pubs.acs.org/doi/10.1021/acs.jctc.3c00308).
     > If you use `kinisi` for an NPT simulation, please cite their work.
 
@@ -39,7 +43,7 @@
     > This can be achieved through the use of a custom time interval input. 
     > You can see how to do this in the [MDAnalysis comparison notebook](./mdanalysis). 
 
-- My analysis is giving very weird numbers for the diffusion coefficient, and my trendline appears very long, what's happening?
+- My analysis is giving very weird numbers for the diffusion coefficient, and my trendline appears very wrong, what's happening?
 
     > You may be encountering the joys of a covariance matrix with a high condition number. 
     > This leads to issues with numerical precision in some of the operations kinisi performs. 
