@@ -30,6 +30,16 @@ maxdepth: 2
 diffusion
 ```
 
+## `displacement`
+
+```{toctree}
+---
+maxdepth: 2
+---
+
+displacement
+```
+
 ## `parser`
 
 ```{toctree}
