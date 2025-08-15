@@ -66,7 +66,8 @@ docs = [
     'h5py',
     'pymatgen-analysis-diffusion',
     'pydata_sphinx_theme',
-    'myst_parser'
+    'myst_parser',
+    'tidynamics'
 ]
 
 [project.urls]
