@@ -189,7 +189,7 @@ class TemperatureDependent:
         nwalkers, ndim = pos.shape
 
         sampler = EnsembleSampler(nwalkers, ndim, self.log_posterior)
-        sampler.run_mcmc(pos, n_samples + n_burn, progress=True)
+        sampler.run_mcmc(pos, n_samples + n_burn, progress=True, progress_kwargs={'desc': 'Likelihood Sampling'})
         flatchain = sampler.get_chain(discard=n_burn, thin=n_thin, flat=True)
         for i, name in enumerate(self.parameter_names):
             self.data_group[name] = Samples(flatchain[:, i], unit=self.parameter_units[i])
