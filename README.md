@@ -1,7 +1,7 @@
 <picture>
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/kinisi-dev/kinisi/blob/master/docs/source/_static/logo_light.png?raw=true">
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/kinisi-dev/kinisi/blob/master/docs/source/_static/logo_dark.png?raw=true">
-  <img alt="The kinisi logo" src="https://github.com/kinisi-dev/kinisi/blob/master/docs/source/_static/logo_light.png?raw=true">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/kinisi-dev/kinisi/blob/main/docs/source/_static/logo_light.png?raw=true">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/kinisi-dev/kinisi/blob/main/docs/source/_static/logo_dark.png?raw=true">
+  <img alt="The kinisi logo" src="https://github.com/kinisi-dev/kinisi/blob/main/docs/source/_static/logo_light.png?raw=true">
 </picture>
 
 Pronunciation: *kee-nee-see*
