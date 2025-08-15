@@ -5,15 +5,18 @@ Parsers for kinisi. This module is responsible for reading in input files from :
 
 # Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License.
-# author: Andrew R. McCluskey (arm61), Harry Richardson (Harry-Rich) and Oskar G. Soulas (osoulas).
+# author: Josh Dunn (jd15489), Andrew R. McCluskey (arm61), Harry Richardson (Harry-Rich) and Oskar G. Soulas (osoulas).
 
 import importlib
 from abc import abstractmethod
-from typing import Union
 
 import numpy as np
 import scipp as sc
 from scipp.typing import VariableLikeType
+
+from kinisi import __version__
+
+from .due import Doi, due
 
 DIMENSIONALITY = {
     'x': np.s_[0],
@@ -189,45 +192,12 @@ class Parser:
         dt_index = (self.dt / (time_step * step_skip)).astype(int)
         return dt_index
 
-    def generate_indices(
-        self,
-        structure: tuple[
-            Union['pymatgen.core.structure.Structure', 'MDAnalysis.core.universe.Universe'],
-            VariableLikeType,
-            VariableLikeType,
-        ],
-        specie_indices: VariableLikeType,
-        coords: VariableLikeType,
-        specie: Union[
-            'pymatgen.core.periodic_table.Element',
-            'pymatgen.core.periodic_table.Specie',
-            'str',
-        ],
-        masses: VariableLikeType,
-    ) -> tuple[VariableLikeType, VariableLikeType]:
-        """
-        Handle the specie indices and determine the indices for the framework and drift correction.
-
-        :param structure: The initial structure to determine the indices from.
-        :param specie_indices: Indices for the atoms in the trajectory used in the diffusion calculation
-        :param coords: The fractional coordinates of the atoms in the trajectory.
-        :param specie: The specie to calculate the diffusivity for.
-        :param masses: Masses associated with indices in indices. 1D scipp array of dim 'atoms in particle'
-
-        :return: A tuple containing the indices for the atoms in the trajectory used in the diffusion calculation
-            and indices of framework atoms.
-        """
-        if specie is not None:
-            indices, drift_indices = self.get_indices(structure, specie)
-        elif isinstance(specie_indices, sc.Variable):
-            if len(specie_indices.dims) > 1:
-                coords, indices, drift_indices = get_molecules(structure, coords, specie_indices, masses)
-            else:
-                indices, drift_indices = get_framework(structure, specie_indices)
-        else:
-            raise TypeError('Unrecognized type for specie or specie_indices, specie_indices must be a sc.array')
-        return coords, indices, drift_indices
-
+    @due.dcite(
+        Doi('10.1021/acs.jctc.3c00308'),
+        path='kinisi.parser.Parser.orthorhombic_calculate_displacements',
+        description='Uses the TOR scheme to find the unwrapped displacements of the atoms in the trajectory.',
+        version=__version__,
+    )
     @staticmethod
     def orthorhombic_calculate_displacements(coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
         """
@@ -268,8 +238,9 @@ class Parser:
         coords: VariableLikeType, lattice: VariableLikeType
     ) -> VariableLikeType:
         """
-        Calculate the absolute displacements of the atoms in the trajectory, when a non-orthrhombic cell is used. This is done by finding the minimum cartesian
-            displacement vector, from its 8 periodic images. This ensures that triclinic cells are treated correctly.
+        Calculate the absolute displacements of the atoms in the trajectory, when a non-orthrhombic cell is used.
+            This is done by finding the minimum cartesian displacement vector, from its 8 periodic images. This
+            ensures that triclinic cells are treated correctly.
 
         :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
             array type object with dimensions of 'particle', 'time', and 'dimension'.
@@ -408,19 +379,25 @@ def get_molecules(
     return new_coords, new_indices, new_drift_indices
 
 
+@due.dcite(
+    Doi('10.1063/5.0260928'),
+    path='kinisi.pymatgen._calculate_centers_of_mass',
+    description='Calculates the weighted molecular centre of mass using the pseudo-center of mass recentering method.',
+    version=__version__,
+)
 def _calculate_centers_of_mass(
     coords: VariableLikeType,
     weights: VariableLikeType,
     indices: VariableLikeType,
 ) -> VariableLikeType:
     """
-    Calculates the weighted molecular centre of mass based on chosen weights and indices as per  DOI: 10.1063/5.0260928.
+    Calculates the weighted molecular centre of mass based on chosen weights and indices as per DOI: 10.1063/5.0260928.
     The method uses the pseudo centre of mass recentering method for efficient centre of mass calculation
 
-     :param coords: array of fractional coordinates these should be dimensionless
-     :param weights: 1D array of weights of elements within molecule
-     :param indices: Scipp array of indices for the atoms in the molecules in the trajectory,
-     this must include 2 dimensions 'particle' - The final number of desired atoms and 'atoms in particle' - the number of atoms in each molecule
+    :param coords: array of fractional coordinates these should be dimensionless
+    :param weights: 1D array of weights of elements within molecule
+    :param indices: Scipp array of indices for the atoms in the molecules in the trajectory,
+        this must include 2 dimensions 'particle' - The final number of desired atoms and 'atoms in particle' - the number of atoms in each molecule
 
      :return: Array containing coordinates of centres of mass of molecules
     """
@@ -438,7 +415,6 @@ def _calculate_centers_of_mass(
     com_pseudo_space = (weights * pseudo_com_recentering).sum(dim=dims_id) / weights.sum(dim=dims_id)
     corrected_com = (com_pseudo_space + (new_s_coords + 0.5)) % 1
 
-    print('If using the kinisi centre of mass feature, please reference: DOI: 10.1063/5.0260928')
     return corrected_com
 
 

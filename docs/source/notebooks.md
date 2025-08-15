@@ -14,4 +14,5 @@ ase_COG
 arrhenius_t
 pymatgen
 mdanalysis
+condition_number
 ```

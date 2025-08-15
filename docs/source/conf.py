@@ -19,8 +19,8 @@
 # -- Project information -----------------------------------------------------
 
 project = 'kinisi'
-copyright = '2024, Andrew R. McCluskey, Alex G. Squires, Josh Dunn, and Benjamin J. Morgan'
-author = 'Andrew R. McCluskey, Alex G. Squires, Josh Dunn, and Benjamin J. Morgan'
+copyright = '2025, kinisi developers'
+author = 'kinisi developers'
 
 from kinisi import __version__
 
@@ -96,7 +96,7 @@ html_theme_options = {
     6,
     "icon_links": [{
         "name": "GitHub",
-        "url": "https://github.com/bjmorgan/kinisi",
+        "url": "https://github.com/kinisi-dev/kinisi",
         "icon": "fab fa-github-square fa-xl",
         "type": "fontawesome",
     }],
@@ -150,7 +150,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'kinisi.tex', 'kinisi Documentation', 'Andrew R. McCluskey and Benjamin J. Morgan', 'manual'),
+    (master_doc, 'kinisi.tex', 'kinisi Documentation', 'kinisi developers', 'manual'),
 ]
 
 # -- Options for manual page output ------------------------------------------
@@ -201,8 +201,9 @@ epub_exclude_files = ['search.html']
 #     app.add_css_file('custom.css')
 
 intersphinx_mapping = {
-    'uravu': ('https://uravu.readthedocs.io/en/latest/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
     'MDAnalysis': ('https://www.mdanalysis.org/docs/', None),
     'pymatgen': ('https://pymatgen.org/', None),
+    'ase': ('https://wiki.fysik.dtu.dk/ase/', None),
+    'scipp': ('https://scipp.github.io/', None),
 }
