@@ -39,7 +39,7 @@
     > This can be achieved through the use of a custom time interval input. 
     > You can see how to do this in the [MDAnalysis comparison notebook](./mdanalysis). 
 
-- My analysis is giving very weird numbers for the diffusion coefficient, and my trendline appears very long, what's happening?
+- My analysis is giving very weird numbers for the diffusion coefficient, and my trendline appears very wrong, what's happening?
 
     > You may be encountering the joys of a covariance matrix with a high condition number. 
     > This leads to issues with numerical precision in some of the operations kinisi performs. 
