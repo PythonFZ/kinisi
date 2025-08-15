@@ -48,9 +48,6 @@ dependencies = [
 dev = [
     'pymatgen',
     'MDAnalysis>=2.8.0',
-    'coverage',
-    'codeclimate-test-reporter',
-    'yapf',
     'pytest',
     'pytest-cov',
     'ase',
