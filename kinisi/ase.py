@@ -143,9 +143,11 @@ class ASEParser(Parser):
         indices = []
         drift_indices = []
 
-        if isinstance(specie, str): specie = [specie]
-        if isinstance(specie, list): specie = sc.array(dims=['specie'], values=specie)
-        
+        if isinstance(specie, str):
+            specie = [specie]
+        if isinstance(specie, list):
+            specie = sc.array(dims=['specie'], values=specie)
+
         for i, site in enumerate(structure):
             if site.symbol in specie.values:
                 indices.append(i)

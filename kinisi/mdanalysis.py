@@ -5,7 +5,7 @@ It is used to extract the necessary data for diffusion analysis from an MDAnalys
 
 # Copyright (c) kinisi developers.
 # Distributed under the terms of the MIT License.
-# author: Andrew R. McCluskey (arm61) and Harry Richardson (Harry-Rich).
+# author: Andrew R. McCluskey (arm61), Harry Richardson (Harry-Rich) and Josh Dunn (jd15489).
 
 import numpy as np
 import scipp as sc
@@ -136,8 +136,10 @@ class MDAnalysisParser(Parser):
         indices = []
         drift_indices = []
 
-        if isinstance(specie, str): specie = [specie]
-        if isinstance(specie, list): specie = sc.array(dims=['specie'], values=specie)
+        if isinstance(specie, str):
+            specie = [specie]
+        if isinstance(specie, list):
+            specie = sc.array(dims=['specie'], values=specie)
 
         for i, site in enumerate(structure):
             if site.type in specie.values:
