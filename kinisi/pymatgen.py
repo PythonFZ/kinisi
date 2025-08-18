@@ -27,7 +27,7 @@ class PymatgenParser(Parser):
     This takes a list of pymatgen structures as an input.
 
     :param structures: Structures ordered in sequence of run.
-    :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+    :param specie: Specie to calculate diffusivity for as a String, list of strings, or scipp.Variable of strings.
     :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
         that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
         that is use for the time interval values.
@@ -54,7 +54,7 @@ class PymatgenParser(Parser):
     def __init__(
         self,
         structures: list['pymatgen.core.structure.Structure'],
-        specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
+        specie: str | list | VariableLikeType,
         time_step: VariableLikeType,
         step_skip: VariableLikeType,
         dt: VariableLikeType = None,
@@ -129,19 +129,23 @@ class PymatgenParser(Parser):
     def get_indices(
         self,
         structure: 'pymatgen.core.structure.Structure',
-        specie: Union['pymatgen.core.periodic_table.Element', 'pymatgen.core.periodic_table.Specie'],
+        specie: str | list | VariableLikeType,
     ) -> tuple[VariableLikeType, VariableLikeType]:
         """
         Determine the framework and mobile indices from a :py:mod:`pymatgen` structure.
 
         :param structure: The initial structure to determine the indices from.
-        :param specie: The specie to calculate the diffusivity for.
+        :param specie: The specie to calculate the diffusivity for as a String, list of strings, or scipp.Variable of strings.
 
         :returns: A tuple of the indices for the specie of interest (mobile) and the
             drift (framework) indices.
         """
         indices = []
         drift_indices = []
+
+        if isinstance(specie, str): specie = [specie]
+        if isinstance(specie, list): specie = sc.array(dims=['specie'], values=specie)               
+
         for i, site in enumerate(structure):
             if site.specie.__str__() in specie:
                 indices.append(i)

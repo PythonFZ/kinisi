@@ -23,7 +23,7 @@ class ASEParser(Parser):
     A parser for ASE Atoms objects
 
     :param atoms: Atoms ordered in sequence of run.
-    :param specie: symbol to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+    :param specie: symbol to calculate diffusivity for as a String, list of strings, or scipp.Variable of strings.
     :param time_step: Time step, in picoseconds, between steps in trajectory.
     :param step_skip: Sampling frequency of the trajectory (time_step is multiplied by this number to get the real
         time between output from the simulation file).
@@ -62,7 +62,7 @@ class ASEParser(Parser):
     def __init__(
         self,
         atoms: list['ase.atoms.Atoms'],
-        specie: str,
+        specie: str | list | VariableLikeType,
         time_step: VariableLikeType,
         step_skip: VariableLikeType,
         dt: VariableLikeType = None,
@@ -128,13 +128,13 @@ class ASEParser(Parser):
     def get_indices(
         self,
         structure: 'ase.atoms.Atoms',
-        specie: str,
+        specie: str | list | VariableLikeType,
     ) -> tuple[VariableLikeType, VariableLikeType]:
         """
         Determine framework and non-framework indices for a :py:mod:`ase` compatible file.
 
         :param structure: Initial structure.
-        :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+        :param specie: Specie to calculate diffusivity for as a String, list of strings, or scipp.Variable of strings.
         :param framework_indices: Indices of framework to be used in drift correction. If set to None will return all indices that are not in indices.
 
         :returns: Tuple containing: indices for the atoms in the trajectory used in the calculation of the diffusion
@@ -142,10 +142,12 @@ class ASEParser(Parser):
         """
         indices = []
         drift_indices = []
-        if not isinstance(specie, list):
-            specie = [specie]
+
+        if isinstance(specie, str): specie = [specie]
+        if isinstance(specie, list): specie = sc.array(dims=['specie'], values=specie)
+        
         for i, site in enumerate(structure):
-            if site.symbol in specie:
+            if site.symbol in specie.values:
                 indices.append(i)
             else:
                 drift_indices.append(i)

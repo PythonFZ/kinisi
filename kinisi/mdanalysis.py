@@ -22,7 +22,7 @@ class MDAnalysisParser(Parser):
     Takes an MDAnalysis.Universe object as an input.
 
     :param universe: MDanalysis universe object to be parsed
-    :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+    :param specie: Specie to calculate diffusivity for as a String, list of strings, or scipp.Variable of strings.
     :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
         that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
         that is use for the time interval values.
@@ -43,7 +43,7 @@ class MDAnalysisParser(Parser):
     def __init__(
         self,
         universe: 'MDAnalysis.core.universe.Universe',
-        specie: str,
+        specie: str | list | VariableLikeType,
         time_step: VariableLikeType,
         step_skip: VariableLikeType,
         dt: VariableLikeType = None,
@@ -122,13 +122,13 @@ class MDAnalysisParser(Parser):
     def get_indices(
         self,
         structure: 'MDAnalysis.universe.Universe.atoms',
-        specie: str,
+        specie: str | list | VariableLikeType,
     ) -> tuple[VariableLikeType, VariableLikeType]:
         """
         Determine framework and non-framework indices for an :py:mod:`MDAnalysis` compatible file.
 
         :param structure: Initial structure.
-        :param specie: Specie to calculate diffusivity for as a String, e.g. :py:attr:`'Li'`.
+        :param specie: Specie to calculate diffusivity for as a String, list of strings, or scipp.Variable of strings.
 
         :return: Tuple containing indices for the atoms in the trajectory used in the calculation of the
             diffusion and indices of framework atoms.
@@ -136,11 +136,11 @@ class MDAnalysisParser(Parser):
         indices = []
         drift_indices = []
 
-        if not isinstance(specie, list):
-            specie = [specie]
+        if isinstance(specie, str): specie = [specie]
+        if isinstance(specie, list): specie = sc.array(dims=['specie'], values=specie)
 
         for i, site in enumerate(structure):
-            if site.type in specie:
+            if site.type in specie.values:
                 indices.append(i)
             else:
                 drift_indices.append(i)
