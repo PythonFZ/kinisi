@@ -11,6 +11,7 @@ import unittest
 
 import MDAnalysis as mda
 import scipp as sc
+import numpy as np
 from numpy.testing import assert_almost_equal
 from scipp.testing.assertions import assert_allclose, assert_identical
 
@@ -66,3 +67,13 @@ class TestMDAnalysisParser(unittest.TestCase):
         assert_almost_equal(data.time_step, 0.005)
         assert_almost_equal(data.step_skip, 250)
         assert_allclose(data.indices, sc.array(dims=['particle'], values=[208, 212], unit=sc.units.dimensionless))
+
+
+    def test_get_species_indices_init(self):
+        molecules = np.arange(0,1500).reshape(-1,12)
+        masses = [12,12,12,12,12,12,1.008,1.008,1.008,1.008,1.008,1.008]
+        specie_indices = sc.array(dims=['particle', 'atoms in particle'],
+                        values=molecules,
+                        unit=sc.Unit('dimensionless'))
+        structure = np.zeros(1500)
+        MDAnalysisParser.get_drift_indices('',structure,specie_indices)
