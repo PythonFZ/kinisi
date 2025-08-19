@@ -147,7 +147,7 @@ class PymatgenParser(Parser):
             specie = sc.array(dims=['specie'], values=specie)
 
         for i, site in enumerate(structure):
-            if site.specie.__str__() in specie:
+            if site.specie.__str__() in specie.values:
                 indices.append(i)
             else:
                 drift_indices.append(i)
@@ -167,4 +167,4 @@ class PymatgenParser(Parser):
 
         :return: Indices for the atoms in the trajectory used as framework atoms.
         """
-        return sc.array(dims=['particle'], values=[x for x in range(len(structure)) if x not in specie_indices])
+        return sc.array(dims=['particle'], values=[x for x in range(len(structure)) if x not in specie_indices.values])
