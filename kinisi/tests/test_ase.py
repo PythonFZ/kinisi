@@ -9,6 +9,7 @@ Tests for the ase module
 import os
 import unittest
 
+import numpy as np
 import scipp as sc
 from ase.io import Trajectory
 
@@ -33,3 +34,11 @@ class TestASEParser(unittest.TestCase):
         data_3 = ASEParser._from_datagroup(datagroup)
         assert vars(data) == vars(data_3)
         assert type(data) is type(data_3)
+
+    def test_get_species_indices_init(self):
+        molecules = np.arange(0, 1500).reshape(-1, 12)
+        specie_indices = sc.array(
+            dims=['particle', 'atoms in particle'], values=molecules, unit=sc.Unit('dimensionless')
+        )
+        structure = np.zeros(1500)
+        ASEParser.get_drift_indices('', structure, specie_indices)
