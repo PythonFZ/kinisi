@@ -9,13 +9,13 @@ Tests for the pymatgen module
 import os
 import unittest
 
+import numpy as np
 import scipp as sc
 from pymatgen.io.vasp import Xdatcar
 
 import kinisi
 from kinisi import parser
 from kinisi.pymatgen import PymatgenParser
-import numpy as np
 
 
 class TestPymatgenParser(unittest.TestCase):
@@ -35,12 +35,10 @@ class TestPymatgenParser(unittest.TestCase):
         assert vars(data) == vars(data_3)
         assert type(data) is type(data_3)
 
-
     def test_get_species_indices_init(self):
-        molecules = np.arange(0,1500).reshape(-1,12)
-        masses = [12,12,12,12,12,12,1.008,1.008,1.008,1.008,1.008,1.008]
-        specie_indices = sc.array(dims=['particle', 'atoms in particle'],
-                        values=molecules,
-                        unit=sc.Unit('dimensionless'))
+        molecules = np.arange(0, 1500).reshape(-1, 12)
+        specie_indices = sc.array(
+            dims=['particle', 'atoms in particle'], values=molecules, unit=sc.Unit('dimensionless')
+        )
         structure = np.zeros(1500)
-        PymatgenParser.get_drift_indices('',structure,specie_indices)
+        PymatgenParser.get_drift_indices('', structure, specie_indices)

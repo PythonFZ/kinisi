@@ -9,8 +9,8 @@ Tests for the ase module
 import os
 import unittest
 
-import scipp as sc
 import numpy as np
+import scipp as sc
 from ase.io import Trajectory
 
 import kinisi
@@ -36,10 +36,9 @@ class TestASEParser(unittest.TestCase):
         assert type(data) is type(data_3)
 
     def test_get_species_indices_init(self):
-        molecules = np.arange(0,1500).reshape(-1,12)
-        masses = [12,12,12,12,12,12,1.008,1.008,1.008,1.008,1.008,1.008]
-        specie_indices = sc.array(dims=['particle', 'atoms in particle'],
-                        values=molecules,
-                        unit=sc.Unit('dimensionless'))
+        molecules = np.arange(0, 1500).reshape(-1, 12)
+        specie_indices = sc.array(
+            dims=['particle', 'atoms in particle'], values=molecules, unit=sc.Unit('dimensionless')
+        )
         structure = np.zeros(1500)
-        ASEParser.get_drift_indices('',structure,specie_indices)
+        ASEParser.get_drift_indices('', structure, specie_indices)
