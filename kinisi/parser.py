@@ -96,7 +96,119 @@ class Parser:
         """
         :return: Volume of system, in cubic angstrom.
         """
+<<<<<<< Updated upstream
         return self._volume
+=======
+        group = self.__dict__.copy()
+        if hdf5:
+            group.pop('_slice')
+        group['__class__'] = f'{self.__class__.__module__}.{self.__class__.__name__}'
+        return sc.DataGroup(group)
+
+    @classmethod
+    def _from_datagroup(cls, datagroup) -> 'Parser':
+        """
+        Convert a :py:mod: 'scipp' DataGroup back to a :py:class:`Parser` object.
+        :return: A :py:class:`Parser` object.
+        """
+        class_path = str(datagroup['__class__'])
+        module_name, class_name = class_path.rsplit('.', 1)
+        module = importlib.import_module(module_name)
+        klass = getattr(module, class_name)
+
+        obj = klass.__new__(klass)
+
+        for key, value in datagroup.items():
+            if key != '__class__':
+                setattr(obj, key, value)
+        if not hasattr(obj, '_slice'):
+            obj._slice = DIMENSIONALITY[obj._dimension.lower()]
+
+        return obj
+
+    def create_integer_dt(
+        self,
+        coords: VariableLikeType,
+        time_step: VariableLikeType,
+        step_skip: VariableLikeType,
+    ) -> VariableLikeType:
+        """
+        Create an integer time interval from the given time intervals (and if necessary the time interval object).
+        Also checks that the time intervals provided in the dt parameter are a valid subset of the simulation time
+        intervals.
+
+        :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
+            array type object with dimensions of 'particle', 'time', and 'dimension'.
+        :param time_step: The input simulation time step, i.e., the time step for the molecular dynamics integrator. Note,
+            that this must be given as a :py:mod:`scipp`-type scalar. The unit used for the time_step, will be the unit
+            that is use for the time interval values.
+        :param step_skip: Sampling freqency of the simulation trajectory, i.e., how many time steps exist between the
+            output of the positions in the trajectory. Similar to the :py:attr:`time_step`, this parameter must be
+            a :py:mod:`scipp` scalar. The units for this scalar should be dimensionless.
+
+        :raises ValueError: If the time intervals provided in the dt parameter are not a subset of the time intervals
+            present in the simulation, based on the time_step and step_skip parameters and number of snapshots
+            in the trajectory.
+
+        :return: The integer time intervals as a :py:mod:`scipp` array with dimensions of 'time interval'.
+        """
+        dt_all = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval') * time_step * step_skip
+        if self.dt is not None:
+            self.dt = sc.to_unit(self.dt, dt_all.unit)
+            if not is_subset_approx(self.dt.values, dt_all.values):
+                raise ValueError(
+                    'The time intervals provided in the dt parameter are not a subset of the time intervals '
+                    'present in the simulation, based on the time_step and step_skip parameters and number of '
+                    'snapshots in the trajectory.'
+                )
+        else:
+            dt_index = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval')
+            self.dt = dt_index * time_step * step_skip
+
+        dt_index = (self.dt / (time_step * step_skip)).astype(int)
+        return dt_index
+
+    @due.dcite(
+        Doi('10.1021/acs.jctc.3c00308'),
+        path='kinisi.parser.Parser.orthorhombic_calculate_displacements',
+        description='Uses the TOR scheme to find the unwrapped displacements of the atoms in the trajectory.',
+        version=__version__,
+    )
+    @staticmethod
+    def orthorhombic_calculate_displacements(coords: VariableLikeType, lattice: VariableLikeType) -> VariableLikeType:
+        """
+        Calculate the absolute displacements of the atoms in the trajectory, when the cell is orthorhombic on all frames.
+
+        :param coords: The fractional coordiates of the atoms in the trajectory. This should be a :py:mod:`scipp`
+            array type object with dimensions of 'particle', 'time', and 'dimension'.
+        :param lattice: A series of matrices that describe the lattice in each step in the trajectory.
+            A :py:mod:`scipp` array with dimensions of 'time', 'dimension1', and 'dimension2'.
+
+        :return: The absolute displacements of the atoms in the trajectory.
+        """
+        lattice_inv = np.linalg.inv(lattice.values)
+        wrapped = sc.array(
+            dims=coords.dims,
+            values=np.einsum('jik,jkl->jil', coords.values, lattice.values),
+            unit=lattice.unit,
+        )
+        wrapped_diff = sc.array(
+            dims=['obs'] + list(coords.dims[1:]),
+            values=(wrapped['time', 1:] - wrapped['time', :-1]).values,
+            unit=lattice.unit,
+        )
+        diff_diff = sc.array(
+            dims=wrapped_diff.dims,
+            values=np.einsum(
+                'jik,jkl->jil',
+                np.floor(np.einsum('jik,jkl->jil', wrapped_diff.values, lattice_inv[1:]) + 0.5),
+                lattice.values[1:],
+            ),
+            unit=lattice.unit,
+        )
+        unwrapped_diff = wrapped_diff - diff_diff
+        return sc.cumsum(unwrapped_diff, 'obs')
+>>>>>>> Stashed changes
 
     @staticmethod
     def get_disp(coords: List[np.ndarray], latt: List[np.ndarray], progress: bool = True) -> np.ndarray:
@@ -147,7 +259,39 @@ class Parser:
             drift_corrected = disp
         return drift_corrected
 
+<<<<<<< Updated upstream
     def get_time_intervals(self, n_steps: int, spacing: str) -> np.ndarray:
+=======
+    @abstractmethod
+    def get_indices(self, structure, specie):
+        pass
+
+    @abstractmethod
+    def get_drift_indices(self, structure, specie_indices):
+        pass
+
+    def get_specie_and_drift_indices(self, specie, specie_indices, drift_indices, structure):
+        match (specie, specie_indices, drift_indices):
+            case (None, None, _):
+                raise TypeError(
+                    'Must specify specie or specie_indices, as str or scipp Variable and scipp Variable, respectively.'
+                )
+            case (str() | sc.Variable(), sc.Variable(), _):
+                raise TypeError('Must only specify specie or specie_indices.')
+            case (str() | list() | sc.Variable(), None, None):  # Automatic specie_indices, with automatic drift correction
+                specie_indices, drift_indices = self.get_indices(structure, specie)
+            case (str() | list() | sc.Variable(), None, sc.Variable()):  # Automatic specie_indices, with manual drift correction
+                specie_indices, _ = self.get_indices(structure, specie)
+            case (None, sc.Variable(), None):  # Manual specie_indices, with automatic drift correction
+                drift_indices = self.get_drift_indices(structure, specie_indices)
+            case (None, sc.Variable(), sc.Variable()):  # Manual specie_indices, with manual drift correction
+                pass
+
+        return specie_indices, drift_indices
+
+    @property
+    def coords(self):
+>>>>>>> Stashed changes
         """
         Calculate the smoothed time intervals to be used.
 
