@@ -296,7 +296,7 @@ class Parser:
                 raise TypeError(
                     'Must specify specie or specie_indices, as str or scipp Variable and scipp Variable, respectively.'
                 )
-            case (str() | sc.Variable(), sc.Variable(), _):
+            case (str() | list() | sc.Variable(), sc.Variable(), _):
                 raise TypeError('Must only specify specie or specie_indices.')
             case (str() | sc.Variable(), None, None):  # Automatic specie_indices, with automatic drift correction
                 specie_indices, drift_indices = self.get_indices(structure, specie)
