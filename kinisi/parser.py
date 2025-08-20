@@ -179,6 +179,7 @@ class Parser:
         """
         dt_all = sc.arange(start=1, stop=coords.sizes['time'], step=1, dim='time interval') * time_step * step_skip
         if self.dt is not None:
+            self.dt = sc.to_unit(self.dt, dt_all.unit)
             if not is_subset_approx(self.dt.values, dt_all.values):
                 raise ValueError(
                     'The time intervals provided in the dt parameter are not a subset of the time intervals '
