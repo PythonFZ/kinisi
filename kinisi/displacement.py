@@ -36,6 +36,8 @@ def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
             [p.displacements['obs', di - 1], p.displacements['obs', di:] - p.displacements['obs', :-di]], 'obs'
         )
         n = (p.displacements.sizes['particle'] * p.dt_index['time interval', -1] / di).value
+        if n <= 1:
+            continue
         s = sc.sum(disp**2, 'dimension')
         m = sc.mean(s).value
         v = (sc.var(s, ddof=1) / n).value
@@ -46,7 +48,7 @@ def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
     return sc.DataArray(
         data=sc.Variable(dims=['time interval'], values=np.array(msd, dtype='float64'), variances=msd_var, unit=s.unit),
         coords={
-            'time interval': p.dt,
+            'time interval': p.dt[: len(msd)],
             'n_samples': sc.array(dims=['time interval'], values=n_samples),
             'dimensionality': p.dimensionality,
         },
