@@ -48,7 +48,7 @@ def calculate_msd(p: parser.Parser, progress: bool = True) -> sc.Variable:
     return sc.DataArray(
         data=sc.Variable(dims=['time interval'], values=np.array(msd, dtype='float64'), variances=msd_var, unit=s.unit),
         coords={
-            'time interval': p.dt[:len(msd)],
+            'time interval': p.dt[: len(msd)],
             'n_samples': sc.array(dims=['time interval'], values=n_samples),
             'dimensionality': p.dimensionality,
         },
