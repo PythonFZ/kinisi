@@ -48,3 +48,5 @@ The documentation can then be built from the `Makefile` as follows (note that `p
 $ cd docs
 $ make html 
 ```
+
+For some more "developer friendly" documentation, we have used Deep Wiki to create [detailed documentation](https://deepwiki.com/kinisi-dev/kinisi), including some very useful flow diagrams of the code construction. 
