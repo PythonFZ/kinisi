@@ -88,11 +88,7 @@ class TestConductivityAnalyzer(unittest.TestCase):
     def test_from_ase(self):
         """Test creating ConductivityAnalyzer from ASE trajectory."""
         with warnings.catch_warnings(record=True) as _:
-            a = ConductivityAnalyzer.from_ase(
-                trajectory=traj,
-                ionic_charge=1 * sc.Unit('e'),
-                **ase_params
-            )
+            a = ConductivityAnalyzer.from_ase(trajectory=traj, ionic_charge=1 * sc.Unit('e'), **ase_params)
             assert_allclose(a.dt, a.da.coords['time interval'])
             assert_almost_equal(a.mscd.values, a.da.values)
             assert_almost_equal(a.mscd.variances, a.da.variances)
