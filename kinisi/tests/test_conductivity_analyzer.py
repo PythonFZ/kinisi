@@ -10,6 +10,7 @@ import os
 import unittest
 import warnings
 
+import MDAnalysis as mda
 import scipp as sc
 from ase.io import Trajectory
 from numpy.testing import assert_almost_equal
@@ -28,6 +29,13 @@ da_params = {'specie': 'Li', 'time_step': 2.0 * sc.Unit('ps'), 'step_skip': 50 *
 ase_file_path = os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_ase.traj')
 traj = Trajectory(ase_file_path, 'r')
 ase_params = {'specie': 'Li', 'time_step': 1.0 * 1e-3 * sc.Unit('fs'), 'step_skip': 1 * sc.Unit('dimensionless')}
+
+mda_universe = mda.Universe(
+    os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.data'),
+    os.path.join(os.path.dirname(kinisi.__file__), 'tests/inputs/example_LAMMPS.dcd'),
+    format='LAMMPS',
+)
+mda_params = {'specie': '1', 'time_step': 0.005 * sc.Unit('fs'), 'step_skip': 250 * sc.Unit('dimensionless')}
 
 
 class TestConductivityAnalyzer(unittest.TestCase):
@@ -89,6 +97,19 @@ class TestConductivityAnalyzer(unittest.TestCase):
         """Test creating ConductivityAnalyzer from ASE trajectory."""
         with warnings.catch_warnings(record=True) as _:
             a = ConductivityAnalyzer.from_ase(trajectory=traj, ionic_charge=1 * sc.Unit('e'), **ase_params)
+            assert_allclose(a.dt, a.da.coords['time interval'])
+            assert_almost_equal(a.mscd.values, a.da.values)
+            assert_almost_equal(a.mscd.variances, a.da.variances)
+            a.conductivity(0 * sc.Unit('fs'), temperature=100 * sc.Unit('K'))
+            assert isinstance(a.sigma, Samples)
+            assert a.sigma.unit == sc.Unit('mS/cm')
+            assert a.flatchain['sigma'].shape == (3200,)
+            assert a.flatchain['intercept'].shape == (3200,)
+
+    def test_from_universe(self):
+        """Test creating ConductivityAnalyzer from MDAnalysis Universe."""
+        with warnings.catch_warnings(record=True) as _:
+            a = ConductivityAnalyzer.from_universe(trajectory=mda_universe, ionic_charge=1 * sc.Unit('e'), **mda_params)
             assert_allclose(a.dt, a.da.coords['time interval'])
             assert_almost_equal(a.mscd.values, a.da.values)
             assert_almost_equal(a.mscd.variances, a.da.variances)
