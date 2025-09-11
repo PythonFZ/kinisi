@@ -234,7 +234,7 @@ class Analyzer:
     def _from_ase(
         cls,
         trajectory: Union['ase.io.trajectory.Trajectory', list['ase.io.trajectory.Trajectory']],
-        specie: Union[str, 'ase.Atom', None],
+        specie: Union[str, 'ase.Atom', list['kinisi.species.Species'], None],
         time_step: sc.Variable,
         step_skip: sc.Variable,
         dtype: str | None = None,
@@ -259,8 +259,10 @@ class Analyzer:
                     dt=dt,
                     dimension=dimension,
                     distance_unit=distance_unit,
-                    specie_indices=s.indices,
-                    masses=s.masses,
+                    specie_indices=sc.array(
+                        dims=['particle', 'atoms in particle'], values=s.indices, unit=sc.Unit('dimensionless')
+                    ),
+                    masses=sc.array(dims=['atoms in particle'], values=s.masses),
                     progress=progress,
                 )
                 for s in specie
@@ -268,7 +270,8 @@ class Analyzer:
             p = parsers[0]
             p.displacements = sc.concat([i.displacements for i in parsers], 'particle')
             return cls(p)
-        elif dtype is None:
+        
+        if dtype is None:
             p = ASEParser(
                 atoms=trajectory,
                 specie=specie,
