@@ -268,7 +268,11 @@ class Analyzer:
                 for s in specie
             ]
             p = parsers[0]
+            print("Shapes before concatenation:")
+            for i, parser in enumerate(parsers):
+                print(f"  Parser {i}: {parser.displacements.shape}")
             p.displacements = sc.concat([i.displacements for i in parsers], 'particle')
+            print(f"Shape after concatenation: {p.displacements.shape}")
             return cls(p)
         
         if dtype is None:
