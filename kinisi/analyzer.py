@@ -246,10 +246,29 @@ class Analyzer:
         progress: bool = True,
     ) -> 'Analyzer':
         """
-        Constructs the necessary :py:mod:`kinisi` objects for analysis from a single or a list of
+        Constructs the necessary :py_mod:`kinisi` objects for analysis from a single or a list of
         :py:class:`ase.io.trajectory.Trajectory` objects.
         """
-        if dtype is None:
+        if isinstance(specie, list) and dtype is None:
+            parsers = [
+                ASEParser(
+                    atoms=trajectory,
+                    specie=None,
+                    time_step=time_step,
+                    step_skip=step_skip,
+                    dt=dt,
+                    dimension=dimension,
+                    distance_unit=distance_unit,
+                    specie_indices=s.indices,
+                    masses=s.masses,
+                    progress=progress,
+                )
+                for s in specie
+            ]
+            p = parsers[0]
+            p.displacements = sc.concat([i.displacements for i in parsers], 'particle')
+            return cls(p)
+        elif dtype is None:
             p = ASEParser(
                 atoms=trajectory,
                 specie=specie,
