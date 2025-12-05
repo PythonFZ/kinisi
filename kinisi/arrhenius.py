@@ -89,6 +89,26 @@ def arrhenius(abscissa: VariableLike, activation_energy: VariableLike, prefactor
     return prefactor * np.exp(-1 * activation_energy / (R_eV.values * abscissa))
 
 
+def log_arrhenius(
+    abscissa: VariableLike, activation_energy: VariableLike, log10_prefactor: VariableLike
+) -> VariableLike:
+    """
+    Determine the diffusion coefficient for a given activation energy, and log10 prefactor according to the
+    Arrhenius equation.
+
+    This function is equivalent to the standard Arrhenius equation but takes the prefactor in log10 space,
+    which is useful for MCMC sampling when the prefactor spans many orders of magnitude.
+
+    :param abscissa: The temperature data.
+    :param activation_energy: The activation_energy value.
+    :param log10_prefactor: The log10 of the prefactor value.
+
+    :return: The diffusion coefficient data.
+    """
+    prefactor = 10**log10_prefactor
+    return prefactor * np.exp(-1 * activation_energy / (R_eV.values * abscissa))
+
+
 class Arrhenius(TemperatureDependent):
     """
     Evaluate the data with a standard Arrhenius relationship.
@@ -121,6 +141,67 @@ class Arrhenius(TemperatureDependent):
         :return: Preexponential factor.
         """
         return self.data_group['preexponential_factor']
+
+
+class LogArrhenius(TemperatureDependent):
+    """
+    Evaluate data with Arrhenius relationship, sampling prefactor in log10 space.
+
+    This class samples the preexponential_factor in log10 space for better
+    MCMC efficiency when the prefactor spans many orders of magnitude.
+    Results are converted back to linear space via the preexponential_factor property.
+
+    :param diffusion: Diffusion coefficient sc.DataFrame with temperature coordinate and variances.
+    :param bounds: Optional bounds. The prefactor bounds should be in LINEAR space
+        (they will be converted to log10 internally).
+    """
+
+    def __init__(
+        self,
+        diffusion,
+        bounds: tuple[tuple[VariableLike, VariableLike], tuple[VariableLike, VariableLike]] | None = None,
+    ) -> 'LogArrhenius':
+        # Convert prefactor bounds to log10 space if provided
+        if bounds is not None:
+            log_bounds = (
+                bounds[0],  # activation_energy bounds unchanged
+                (
+                    np.log10(bounds[1][0].value) * sc.Unit('dimensionless'),
+                    np.log10(bounds[1][1].value) * sc.Unit('dimensionless'),
+                ),
+            )
+        else:
+            log_bounds = None
+
+        parameter_names = ('activation_energy', 'log10_preexponential_factor')
+        parameter_units = (sc.Unit('eV'), sc.Unit('dimensionless'))
+
+        super().__init__(diffusion, log_arrhenius, parameter_names, parameter_units, bounds=log_bounds)
+
+    @property
+    def activation_energy(self) -> VariableLike | Samples:
+        """
+        :return: Activation energy distribution in electronvolt.
+        """
+        return self.data_group['activation_energy']
+
+    @property
+    def log10_preexponential_factor(self) -> VariableLike | Samples:
+        """
+        :return: Log10 of preexponential factor (dimensionless).
+        """
+        return self.data_group['log10_preexponential_factor']
+
+    @property
+    def preexponential_factor(self) -> VariableLike | Samples:
+        """
+        :return: Preexponential factor converted to linear space (cm^2/s).
+        """
+        log_val = self.data_group['log10_preexponential_factor']
+        if isinstance(log_val, Samples):
+            return Samples(10**log_val.values, unit=sc.Unit('cm^2/s'))
+        else:
+            return sc.scalar(10**log_val.value, unit=sc.Unit('cm^2/s'))
 
 
 def vtf_equation(

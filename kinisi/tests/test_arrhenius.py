@@ -220,6 +220,76 @@ class TestArrhenius(unittest.TestCase):
         assert_almost_equal(9.996132574, arrhenius.arrhenius(300, 1e-5, 10), decimal=5)
 
 
+class TestLogArrhenius(unittest.TestCase):
+    """
+    Unit tests for LogArrhenius class
+    """
+
+    def test_log_arrhenius_function(self):
+        """
+        Test the log_arrhenius function produces same result as arrhenius
+        """
+        # log10(10) = 1
+        assert_almost_equal(
+            arrhenius.arrhenius(300, 1e-5, 10), arrhenius.log_arrhenius(300, 1e-5, 1), decimal=5
+        )
+        # log10(100) = 2
+        assert_almost_equal(
+            arrhenius.arrhenius(300, 1e-5, 100), arrhenius.log_arrhenius(300, 1e-5, 2), decimal=5
+        )
+
+    def test_init(self):
+        """
+        Test the initialisation of LogArrhenius class
+        """
+        log_arr = arrhenius.LogArrhenius(data)
+        assert_equal(log_arr.function, arrhenius.log_arrhenius)
+        assert log_arr.parameter_names == ('activation_energy', 'log10_preexponential_factor')
+        assert log_arr.parameter_units == (sc.Unit('eV'), sc.Unit('dimensionless'))
+        assert isinstance(log_arr.activation_energy, sc.Variable)
+        assert isinstance(log_arr.log10_preexponential_factor, sc.Variable)
+
+    def test_init_bounds(self):
+        """
+        Test the initialisation of LogArrhenius class with bounds in linear space
+        """
+        # Bounds are given in linear space
+        bounds = ((0 * sc.Unit('eV'), 1 * sc.Unit('eV')), (1e-5 * sc.Unit('cm^2/s'), 1e5 * sc.Unit('cm^2/s')))
+        log_arr = arrhenius.LogArrhenius(data, bounds=bounds)
+        assert_equal(log_arr.function, arrhenius.log_arrhenius)
+        # Check that prefactor bounds are converted to log space
+        testing.assert_allclose(log_arr.bounds[0][0], bounds[0][0])
+        testing.assert_allclose(log_arr.bounds[0][1], bounds[0][1])
+        # log10(1e-5) = -5, log10(1e5) = 5
+        assert_almost_equal(log_arr.bounds[1][0].value, -5)
+        assert_almost_equal(log_arr.bounds[1][1].value, 5)
+
+    def test_preexponential_factor_property(self):
+        """
+        Test that preexponential_factor property converts from log to linear space
+        """
+        log_arr = arrhenius.LogArrhenius(data)
+        # The property should return a value in cm^2/s
+        prefactor = log_arr.preexponential_factor
+        log_prefactor = log_arr.log10_preexponential_factor
+        assert prefactor.unit == sc.Unit('cm^2/s')
+        # 10^log_prefactor should equal prefactor
+        assert_almost_equal(10**log_prefactor.value, prefactor.value, decimal=5)
+
+    def test_mcmc(self):
+        """
+        Test MCMC sampling with LogArrhenius class
+        """
+        log_arr = arrhenius.LogArrhenius(data)
+        log_arr.mcmc(n_samples=10, n_burn=5, n_walkers=32)
+        assert isinstance(log_arr.log10_preexponential_factor, Samples)
+        assert isinstance(log_arr.activation_energy, Samples)
+        # Check that preexponential_factor property works with Samples
+        prefactor = log_arr.preexponential_factor
+        assert isinstance(prefactor, Samples)
+        assert prefactor.unit == sc.Unit('cm^2/s')
+
+
 class TestVTF(unittest.TestCase):
     """
     Unit tests for VogelFulcherTammann (VTF) class
